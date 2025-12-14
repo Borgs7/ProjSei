@@ -2,7 +2,7 @@
 // Centered on Calapan area with appropriate zoom level
 const map = L.map('map').setView([13.4251, 121.0220], 9);
 
-// Add Stamen Terrain basemap (with hillshade)
+// Add Stamen Terrain basemap
 const terrainLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png', {
     attribution: '© Stamen Design, © OpenStreetMap contributors',
     maxZoom: 18
@@ -17,9 +17,13 @@ const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
 // Add terrain layer to map by default
 terrainLayer.addTo(map);
 
-// ============================================
+// LAYER REFERENCES (for layer control)
+let pgaRasterLayer = null;
+let contoursLayer = null;
+let phBoundaryLayer = null;
+let epicenterLayer = null;
+
 // LOAD PHILIPPINES BOUNDARY (GeoJSON)
-// ============================================
 fetch('data/ph_boundary.geojson')
     .then(response => {
         if (!response.ok) {
@@ -28,7 +32,7 @@ fetch('data/ph_boundary.geojson')
         return response.json();
     })
     .then(data => {
-        L.geoJSON(data, {
+        phBoundaryLayer = L.geoJSON(data, {
             style: {
                 fillColor: 'transparent',
                 color: '#333',
@@ -42,9 +46,7 @@ fetch('data/ph_boundary.geojson')
         console.warn('Philippines boundary not loaded:', error.message);
     });
 
-// ============================================
 // LOAD CONTOURS (GeoJSON)
-// ============================================
 fetch('data/contours.geojson')
     .then(response => {
         if (!response.ok) {
@@ -53,7 +55,7 @@ fetch('data/contours.geojson')
         return response.json();
     })
     .then(data => {
-        const contoursLayer = L.geoJSON(data, {
+        contoursLayer = L.geoJSON(data, {
             style: {
                 color: '#ff7800',
                 weight: 1.5,
@@ -81,9 +83,7 @@ fetch('data/contours.geojson')
         console.warn('Contours not loaded:', error.message);
     });
 
-// ============================================
 // LOAD EPICENTER (GeoJSON)
-// ============================================
 fetch('data/epicenter.geojson')
     .then(response => {
         if (!response.ok) {
@@ -92,7 +92,7 @@ fetch('data/epicenter.geojson')
         return response.json();
     })
     .then(data => {
-        L.geoJSON(data, {
+        epicenterLayer = L.geoJSON(data, {
             pointToMarker: function(feature, latlng) {
                 return L.marker(latlng, {
                     icon: L.divIcon({
@@ -120,7 +120,7 @@ fetch('data/epicenter.geojson')
         console.warn('Epicenter not loaded:', error.message);
         
         // Fallback: Create manual epicenter if file not found
-        const epicenter = L.marker([13.4251, 121.0220], {
+        epicenterLayer = L.marker([13.4251, 121.0220], {
             icon: L.divIcon({
                 className: 'epicenter-marker',
                 html: '<div style="font-size: 24px;">⭐</div>',
@@ -129,7 +129,7 @@ fetch('data/epicenter.geojson')
             })
         }).addTo(map);
         
-        epicenter.bindPopup(`
+        epicenterLayer.bindPopup(`
             <div style="text-align: center;">
                 <h3 style="color: #d73027; margin-bottom: 5px;">⭐ M 7.1 Earthquake</h3>
                 <p style="margin: 5px 0;"><strong>Location:</strong> Calapan, Mindoro</p>
@@ -159,7 +159,7 @@ if (typeof parseGeoraster !== 'undefined' && typeof GeoRasterLayer !== 'undefine
             parseGeoraster(arrayBuffer).then(georaster => {
                 console.log('Georaster info:', georaster);
                 
-                const layer = new GeoRasterLayer({
+                pgaRasterLayer = new GeoRasterLayer({
                     georaster: georaster,
                     opacity: 0.7,
                     pixelValuesToColorFn: values => {
@@ -183,7 +183,7 @@ if (typeof parseGeoraster !== 'undefined' && typeof GeoRasterLayer !== 'undefine
                     resolution: 256
                 });
                 
-                layer.addTo(map);
+                pgaRasterLayer.addTo(map);
                 console.log('✓ PGA raster loaded');
                 
                 // Update info panel
@@ -211,19 +211,30 @@ if (typeof parseGeoraster !== 'undefined' && typeof GeoRasterLayer !== 'undefine
     `;
 }
 
-// ============================================
-// LAYER CONTROL
-// ============================================
-const baseMaps = {
-    "Terrain": terrainLayer,
-    "OpenStreetMap": osmLayer
-};
+// ENHANCED LAYER CONTROL
+setTimeout(() => {
+    const baseMaps = {
+        "🗺️ Terrain": terrainLayer,
+        "🌍 OpenStreetMap": osmLayer
+    };
+    
+    const overlayMaps = {};
+    
+    // Add layers that are loaded
+    if (pgaRasterLayer) overlayMaps["📊 PGA Intensity"] = pgaRasterLayer;
+    if (contoursLayer) overlayMaps["📈 Contours"] = contoursLayer;
+    if (phBoundaryLayer) overlayMaps["🗾 Philippines Border"] = phBoundaryLayer;
+    if (epicenterLayer) overlayMaps["⭐ Epicenter"] = epicenterLayer;
+    
+    L.control.layers(baseMaps, overlayMaps, {
+        position: 'topright',
+        collapsed: false  // Keep expanded by default
+    }).addTo(map);
+    
+    console.log('✓ Layer controls initialized');
+}, 2000); // Wait 2 seconds for all layers to load
 
-L.control.layers(baseMaps).addTo(map);
-
-// ============================================
 // LEGEND
-// ============================================
 const legend = L.control({position: 'bottomright'});
 
 legend.onAdd = function(map) {
@@ -244,31 +255,7 @@ legend.onAdd = function(map) {
 
 legend.addTo(map);
 
-// ============================================
-// CLICK EVENT - Show coordinates and PGA
-// ============================================
-map.on('click', function(e) {
-    const lat = e.latlng.lat.toFixed(4);
-    const lng = e.latlng.lng.toFixed(4);
-    
-    L.popup()
-        .setLatLng(e.latlng)
-        .setContent(`
-            <strong>Location:</strong><br>
-            Latitude: ${lat}°<br>
-            Longitude: ${lng}°<br>
-            <br>
-            <em style="color: #999; font-size: 12px;">
-            Note: For Phase 2, this will query<br>
-            PGA values from the database in real-time
-            </em>
-        `)
-        .openOn(map);
-});
-
-// ============================================
 // INITIALIZATION MESSAGE
-// ============================================
 console.log('🗺️ SeiScanPH Map initialized!');
 console.log('📍 Epicenter: 13.4251°N, 121.0220°E (Calapan)');
 console.log('📊 Loading QGIS exports...');

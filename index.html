@@ -8,7 +8,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Your custom CSS -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -22,13 +22,16 @@
     <div id="map"></div>
 
     <!-- Info Panel -->
-    <div class="info-panel">
+<div class="info-panel" id="info-panel">
+    <button class="minimize-btn" id="minimize-btn" onclick="toggleInfoPanel()">−</button>
+    <div id="panel-content">
         <h2>M 7.1 Calapan Earthquake</h2>
         <p>Peak Ground Acceleration (PGA) Map</p>
         <div id="map-info">
             <p>Loading map data...</p>
         </div>
     </div>
+</div>
     
     <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -39,5 +42,25 @@
     
     <!-- Your map JavaScript -->
     <script src="js/map.js"></script>
+    <script src="js/click-calculator.js"></script>
+
+    
+    <!-- Info Panel Toggle Script -->
+    <script>
+        function toggleInfoPanel() {
+            const panel = document.getElementById('info-panel');
+            const btn = document.getElementById('minimize-btn');
+            
+            panel.classList.toggle('minimized');
+            
+            if (panel.classList.contains('minimized')) {
+                btn.innerHTML = '+';
+                btn.title = 'Expand panel';
+            } else {
+                btn.innerHTML = '−';
+                btn.title = 'Minimize panel';
+            }
+        }
+    </script>
 </body>
 </html>
