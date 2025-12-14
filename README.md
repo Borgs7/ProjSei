@@ -11,7 +11,7 @@ Status: Initial Simple Site v2.0 (Dec 2025)
 - Layer toggle controls exported from QGIS (PGA, contours, boundaries, epicenter)
 - Multiple basemaps (Terrain, OpenStreetMap)
 - Info panel
-- Outside coverage detection
+- Outside coverage detection (Will say "No current data" as of now)
 
 ### What Can Be Seen (so far)?
 **M 7.1 Calapan Earthquake** (April 4, 2017) [Only 1 epicenter so far for v2.0]
