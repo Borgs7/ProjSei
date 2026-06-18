@@ -35,5 +35,5 @@ Status: Initial Simple Site v2.0 (Dec 2025)
 Borgy Vinarao
 
 ---
-**Version:** 2.0 (Phase 1 90% completed)  
-**Last Updated:** December 15, 2025
+**Version:** 4.0 (Phase 2 currently)  
+**Last Updated:** June 18, 2026
