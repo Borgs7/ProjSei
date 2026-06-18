@@ -1,8 +1,18 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-URL_DATABASE = 'postgresql://postgres:M1L3t_yes!@localhost:5432/SeiScanDB'
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # run: pip install python-dotenv
+
+URL_DATABASE = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:M1L3t_yes!@localhost:5432/SeiScanDB"  # fallback — remove after setting .env
+)
 
 engine = create_engine(URL_DATABASE, echo=False)
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import date
 
@@ -11,32 +11,41 @@ class ScenarioBase(BaseModel):
     event_date: Optional[date] = None
     description: Optional[str] = None
 
+
 class ScenarioResponse(ScenarioBase):
     id: int
     is_active: bool
     data_points: Optional[int] = None
-    
+
     class Config:
         from_attributes = True
 
+
 class IntensityRequest(BaseModel):
-    scenario_id: int = Field(..., gt=0)
-    latitude: float = Field(..., ge=-90, le=90)
-    longitude: float = Field(..., ge=-180, le=180)
+    latitude: float = Field(..., ge=4.0, le=22.0)
+    longitude: float = Field(..., ge=114.0, le=130.0)
     num_points: int = Field(default=8, ge=1, le=20)
-    
-    @validator('num_points')
+
+    @field_validator('num_points')
+    @classmethod
     def validate_num_points(cls, v):
         if v > 20:
             raise ValueError('num_points must be <= 20')
         return v
 
+
 class IntensityResponse(BaseModel):
-    scenario_id: int
+    status: str
     location: dict
-    pga_value: float
-    mmi: int
-    intensity_level: str
-    description: str
-    distance_from_epicenter_km: float
-    nearest_points_used: int
+    pga_value: Optional[float] = None
+    mmi: Optional[int] = None
+    intensity_level: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    text_color: Optional[str] = None
+    distance_from_epicenter_km: Optional[float] = None
+    nearest_points_used: Optional[int] = None
+    nearest_point_distance_km: Optional[float] = None
+    epicenter: Optional[dict] = None
+    method: Optional[str] = None
+

@@ -4,62 +4,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeiScanPH - Earthquake Hazard Map</title>
-    
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <h1>🌏 SeiScanPH</h1>
-        <p>Earthquake Hazard Mapping for the Philippines</p>
+
+    <!-- HEADER -->
+    <header id="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <div>
+                    <h1>SeiScanPH</h1>
+                    <p class="tagline">Earthquake Hazard Intelligence</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-center">
+            <div class="search-container">
+                <div class="search-box">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search location — e.g. Calapan, Manila, Batangas..." autocomplete="off">
+                    <button id="search-btn" onclick="searchLocation()">Go</button>
+                </div>
+                <div id="search-results" class="search-results"></div>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="api-status" id="api-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking...</span>
+            </div>
+        </div>
     </header>
 
-    <!-- Map Container -->
-    <div id="map"></div>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
 
-    <!-- Info Panel -->
-<div class="info-panel" id="info-panel">
-    <button class="minimize-btn" id="minimize-btn" onclick="toggleInfoPanel()">−</button>
-    <div id="panel-content">
-        <h2>M 7.1 Calapan Earthquake</h2>
-        <p>Peak Ground Acceleration (PGA) Map</p>
-        <div id="map-info">
-            <p>Loading map data...</p>
+        <div class="sidebar-content" id="sidebar-content">
+            <!-- Scenario Info -->
+            <div class="sidebar-section">
+                <div class="section-label">ACTIVE SCENARIO</div>
+                <div class="scenario-card">
+                    <div class="scenario-magnitude">M 7.1</div>
+                    <div class="scenario-details">
+                        <div class="scenario-name">Calapan Earthquake</div>
+                        <div class="scenario-location">Oriental Mindoro</div>
+                        <div class="scenario-meta">
+                            <span>Depth: 10 km</span>
+                            <span>•</span>
+                            <span>13.43°N, 121.02°E</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="sidebar-section">
+                <div class="section-label">DATA STATUS</div>
+                <div id="map-info" class="status-info">
+                    <p>Connecting to API...</p>
+                </div>
+            </div>
+
+            <!-- How to use -->
+            <div class="sidebar-section">
+                <div class="section-label">HOW TO USE</div>
+                <div class="instructions">
+                    <div class="instruction-step">
+                        <span class="step-num">1</span>
+                        <span>Search a location or click the map</span>
+                    </div>
+                    <div class="instruction-step">
+                        <span class="step-num">2</span>
+                        <span>View earthquake intensity (MMI)</span>
+                    </div>
+                    <div class="instruction-step">
+                        <span class="step-num">3</span>
+                        <span>Read expected effects and PGA values</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="sidebar-section">
+                <div class="section-label">INTENSITY SCALE</div>
+                <div class="legend-items">
+                    <div class="legend-row"><span class="legend-color" style="background:#FF0000"></span><span>X — Extreme</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#FF7F7F"></span><span>IX — Violent</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#FFA500"></span><span>VIII — Severe</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#FFD27F"></span><span>VII — Very Strong</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#FFFF00"></span><span>VI — Strong</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#7FFF7F"></span><span>V — Moderate</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#7FFFE6"></span><span>IV — Light</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#9FD9FF"></span><span>III — Weak</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#BFCCFF"></span><span>II — Weak</span></div>
+                    <div class="legend-row"><span class="legend-color" style="background:#FFFFFF; border: 1px solid #ccc"></span><span>I — Not Felt</span></div>
+                </div>
+            </div>
+
+            <!-- Credits -->
+            <div class="sidebar-section sidebar-footer">
+                <div class="section-label">METHODOLOGY</div>
+                <p class="credit-text">PGA → MMI: Wald et al. (1999)</p>
+                <p class="credit-text">Interpolation: IDW (8 nearest points)</p>
+                <p class="credit-text">Database: PostGIS + FastAPI</p>
+            </div>
         </div>
     </div>
-</div>
-    
-    <!-- Leaflet JavaScript -->
+
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Georaster libraries for loading GeoTIFF -->
     <script src="https://unpkg.com/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
     <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
-    
-    <!-- Your map JavaScript -->
+    <script src="js/active-faults.js"></script>
     <script src="js/map.js"></script>
     <script src="js/click-calculator.js"></script>
 
-    
-    <!-- Info Panel Toggle Script -->
+    <!-- Search & Sidebar Logic -->
     <script>
-        function toggleInfoPanel() {
-            const panel = document.getElementById('info-panel');
-            const btn = document.getElementById('minimize-btn');
-            
-            panel.classList.toggle('minimized');
-            
-            if (panel.classList.contains('minimized')) {
-                btn.innerHTML = '+';
-                btn.title = 'Expand panel';
-            } else {
-                btn.innerHTML = '−';
-                btn.title = 'Minimize panel';
+        // SEARCH - Uses Nominatim (free OpenStreetMap geocoder)
+        async function searchLocation() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '<div class="search-loading">Searching...</div>';
+            resultsDiv.style.display = 'block';
+
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`;
+                const response = await fetch(url, {
+                    headers: { 'Accept-Language': 'en' }
+                });
+                const results = await response.json();
+
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="search-no-results">No results found</div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = results.map(r => `
+                    <div class="search-result-item" onclick="goToLocation(${r.lat}, ${r.lon}, '${r.display_name.replace(/'/g, "\\'")}')">
+                        <div class="result-name">${r.display_name.split(',').slice(0, 3).join(',')}</div>
+                        <div class="result-coords">${parseFloat(r.lat).toFixed(4)}°N, ${parseFloat(r.lon).toFixed(4)}°E</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="search-no-results">Search failed — check connection</div>';
             }
+        }
+
+        function goToLocation(lat, lon, name) {
+            document.getElementById('search-results').style.display = 'none';
+            document.getElementById('search-input').value = name.split(',').slice(0, 2).join(',');
+            map.flyTo([lat, lon], 12, { duration: 1.5 });
+
+            // Auto-trigger intensity calculation at that location
+            setTimeout(() => {
+                map.fire('click', { latlng: L.latLng(lat, lon) });
+            }, 1800);
+        }
+
+        // Enter key triggers search
+        document.getElementById('search-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchLocation();
+        });
+
+        // Close search results when clicking elsewhere
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('search-results').style.display = 'none';
+            }
+        });
+
+        // SIDEBAR TOGGLE
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebar-toggle');
+            sidebar.classList.toggle('collapsed');
+
+            toggle.innerHTML = sidebar.classList.contains('collapsed')
+                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>'
+                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>';
         }
     </script>
 </body>

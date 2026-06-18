@@ -22,6 +22,7 @@ let pgaRasterLayer = null;
 let contoursLayer = null;
 let phBoundaryLayer = null;
 let epicenterLayer = null;
+let faultsLayer = null;
 
 // LOAD PHILIPPINES BOUNDARY (GeoJSON)
 fetch('data/ph_boundary.geojson')
@@ -138,6 +139,17 @@ fetch('data/epicenter.geojson')
         `);
     });
 
+// LOAD ACTIVE FAULTS (GeoJSON via ActiveFaults helper)
+ActiveFaults.fromStatic('data/active_faults_calapan.geojson')
+    .then(layer => {
+        faultsLayer = layer;
+        faultsLayer.addTo(map);
+        console.log('✓ Active faults loaded');
+    })
+    .catch(error => {
+        console.warn('Active faults not loaded:', error.message);
+    });
+
 // ============================================
 // LOAD PGA RASTER (GeoTIFF)
 // Note: This requires georaster and georaster-layer-for-leaflet libraries
@@ -225,6 +237,7 @@ setTimeout(() => {
     if (contoursLayer) overlayMaps["📈 Contours"] = contoursLayer;
     if (phBoundaryLayer) overlayMaps["🗾 Philippines Border"] = phBoundaryLayer;
     if (epicenterLayer) overlayMaps["⭐ Epicenter"] = epicenterLayer;
+    if (faultsLayer) overlayMaps["⚠️ Active Faults"] = faultsLayer;
     
     L.control.layers(baseMaps, overlayMaps, {
         position: 'topright',

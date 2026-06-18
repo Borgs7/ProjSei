@@ -1,370 +1,284 @@
+// ============================================
 // SEISCANPH - CLICK-TO-CALCULATE INTENSITY
+// Phase 2: API-first with offline fallback
+// ============================================
 
-// Store PGA points data globally
+const API_BASE = 'http://localhost:8000';
+let apiConnected = false;
+
+// ============================================
+// API CONNECTION CHECK
+// ============================================
+async function checkAPIConnection() {
+    const statusEl = document.getElementById('api-status');
+    const infoPanel = document.getElementById('map-info');
+
+    try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+
+        if (data.status === 'healthy') {
+            apiConnected = true;
+
+            // Update header status
+            statusEl.className = 'api-status connected';
+            statusEl.querySelector('.status-text').textContent = 'API Online';
+
+            // Update sidebar info
+            if (infoPanel) {
+                const count = data.seismic_points_loaded?.toLocaleString() || '?';
+                infoPanel.innerHTML = `
+                    <p class="status-connected">✓ Connected to PostGIS</p>
+                    <p class="status-points">${count} PGA data points loaded</p>
+                    <p style="font-size: 11px; color: var(--accent); margin-top: 6px;">Click the map or search a location</p>
+                `;
+            }
+            console.log(`✓ API connected | ${data.seismic_points_loaded} points`);
+        } else {
+            throw new Error(data.error || 'Unhealthy');
+        }
+    } catch (error) {
+        apiConnected = false;
+
+        statusEl.className = 'api-status disconnected';
+        statusEl.querySelector('.status-text').textContent = 'API Offline';
+
+        if (infoPanel) {
+            infoPanel.innerHTML = `
+                <p style="color: var(--warning); font-weight: 600;">⚠ API Offline</p>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                    Run: <code style="background: var(--bg-primary); padding: 1px 5px; border-radius: 3px;">uvicorn main:app --reload</code>
+                </p>
+            `;
+        }
+        loadStaticPGAData();
+    }
+}
+
+// ============================================
+// FALLBACK: Static GeoJSON
+// ============================================
 let pgaPointsData = [];
 
-// Epicenter coordinates (Calapan M7.1) 1 for now
-const EPICENTER = {
-    lat: 13.4251,
-    lon: 121.0220,
-    magnitude: 7.1,
-    depth: 10 // km
-};
+function loadStaticPGAData() {
+    fetch('data/pga_points.geojson')
+        .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+        .then(data => {
+            pgaPointsData = data.features.map(f => ({
+                lat: f.properties.latitude,
+                lon: f.properties.longitude,
+                pga: f.properties.pga_cm_s2
+            }));
+            console.log(`✓ Fallback: ${pgaPointsData.length} static points`);
+        })
+        .catch(err => console.warn('Static data not available:', err.message));
+}
 
-// PGA POINTS DATA
-fetch('data/pga_points.geojson')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('PGA points file not found');
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Extract coordinates and PGA values
-        pgaPointsData = data.features.map(feature => ({
-            lat: feature.properties.latitude,
-            lon: feature.properties.longitude,
-            pga: feature.properties.pga_cm_s2
-        }));
-        
-        console.log(`✓ Loaded ${pgaPointsData.length} PGA data points`);
-        
-        // Info panel
-        const infoPanel = document.getElementById('map-info');
-        if (infoPanel) {
-            infoPanel.innerHTML = `
-                <p style="color: #4CAF50; font-weight: bold;">✓ ${pgaPointsData.length.toLocaleString()} PGA points loaded</p>
-                <p style="font-size: 12px; margin-top: 5px;">Click anywhere to calculate intensity</p>
-            `;
-        }
-    })
-    .catch(error => {
-        console.error('❌ Failed to load PGA points:', error);
-        const infoPanel = document.getElementById('map-info');
-        if (infoPanel) {
-            infoPanel.innerHTML = `
-                <p style="color: #f44336;">✗ PGA points not loaded</p>
-                <p style="font-size: 12px;">${error.message}</p>
-            `;
-        }
-    });
-
-// UTILITY FUNCTIONS AND PARAMETERS
-
-/**
- * Calculate distance between two points using Haversine formula
- * @param {number} lat1 - Latitude of point 1
- * @param {number} lon1 - Longitude of point 1
- * @param {number} lat2 - Latitude of point 2
- * @param {number} lon2 - Longitude of point 2
- * @returns {number} Distance in kilometers
- */
+// ============================================
+// OFFLINE CALC FUNCTIONS
+// ============================================
 function haversineDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/**
- * Inverse Distance Weighting interpolation
- * @param {number} clickLat - Clicked latitude
- * @param {number} clickLon - Clicked longitude
- * @param {Array} nearestPoints - Array of nearest PGA points
- * @param {number} power - IDW power parameter (default: 2)
- * @returns {number} Interpolated PGA value
- */
-function interpolateIDW(clickLat, clickLon, nearestPoints, power = 2) {
-    if (nearestPoints.length === 0) return null;
-    
-    // If click is very close to an existing point (< 100m), return that value
-    const veryClosePoint = nearestPoints.find(p => 
-        haversineDistance(clickLat, clickLon, p.lat, p.lon) < 0.1
-    );
-    if (veryClosePoint) return veryClosePoint.pga;
-    
-    let numerator = 0;
-    let denominator = 0;
-    
-    nearestPoints.forEach(point => {
-        const distance = haversineDistance(clickLat, clickLon, point.lat, point.lon);
-        if (distance < 0.001) return point.pga;
-        
-        const weight = 1 / Math.pow(distance, power);
-        numerator += weight * point.pga;
-        denominator += weight;
+function offlineCalculate(clickLat, clickLon) {
+    if (pgaPointsData.length === 0) return null;
+    const sorted = pgaPointsData
+        .map(p => ({ ...p, dist: haversineDistance(clickLat, clickLon, p.lat, p.lon) }))
+        .sort((a, b) => a.dist - b.dist).slice(0, 8);
+    if (sorted[0].dist > 500) return null;
+    let num = 0, den = 0;
+    sorted.forEach(p => {
+        if (p.dist < 0.001) { num = p.pga; den = 1; return; }
+        const w = 1 / (p.dist ** 2);
+        num += w * p.pga; den += w;
     });
-    
-    return denominator > 0 ? numerator / denominator : null;
+    return den > 0 ? num / den : null;
 }
 
-/**
- * Find N nearest points to clicked location
- * @param {number} clickLat - Clicked latitude
- * @param {number} clickLon - Clicked longitude
- * @param {Array} allPoints - All PGA points
- * @param {number} n - Number of nearest points to find
- * @returns {Array} Array of nearest points
- */
-function findNearestPoints(clickLat, clickLon, allPoints, n = 8) {
-    const pointsWithDistance = allPoints.map(point => ({
-        ...point,
-        distance: haversineDistance(clickLat, clickLon, point.lat, point.lon)
-    }));
-    
-    pointsWithDistance.sort((a, b) => a.distance - b.distance);
-    return pointsWithDistance.slice(0, n);
-}
-
-/**
- * Convert PGA (cm/s²) to MMI (Modified Mercalli Intensity)
- * Based on Wald et al. (1999) - Official USGS ShakeMap piecewise relationship
- * Reference: "Relationships between Peak Ground Acceleration, Peak Ground Velocity, 
- *             and Modified Mercalli Intensity in California"
- * @param {number} pga - Peak Ground Acceleration in cm/s² (Gal)
- * @returns {number} MMI intensity (1-10)
- */
 function pgaToMMI(pga) {
     if (!pga || pga <= 0) return 1;
-    
-    // Log10 of PGA in cm/s²
     const logPga = Math.log10(pga);
-    let mmi;
-    
-    // Piecewise function with transition at PGA ≈ 66.5 cm/s² (log10 ≈ 1.82)
-    // This corresponds to MMI V
-    if (logPga <= 1.82) { 
-        // Low Intensity (MMI I-IV): More gradual increase
-        mmi = 2.20 * logPga + 1.00;
-    } else {
-        // High Intensity (MMI V-X): Steeper increase
-        mmi = 3.66 * logPga - 1.66;
-    }
-    
-    // Round and clip to standard MMI range (I to X)
-    const mmiRounded = Math.round(mmi);
-    return Math.max(1, Math.min(10, mmiRounded));
+    return Math.max(1, Math.min(10, Math.round(
+        logPga <= 1.82 ? 2.20 * logPga + 1.00 : 3.66 * logPga - 1.66
+    )));
 }
 
-/**
- * Get intensity description and color
- * @param {number} mmi - MMI intensity value
- * @returns {Object} Object containing level, description, and color
- */
 function getIntensityDescription(mmi) {
-    const descriptions = {
-        1: { 
-            level: "I - Not Felt", 
-            description: "Not felt except by very few under especially favorable conditions.", 
-            color: "#FFFFFF",
-            textColor: "#333"
-        },
-        2: { 
-            level: "II - Weak", 
-            description: "Felt only by few persons at rest, especially on upper floors.", 
-            color: "#BFCCFF",
-            textColor: "#333"
-        },
-        3: { 
-            level: "III - Weak", 
-            description: "Felt quite noticeably indoors. Standing motor cars may rock slightly.", 
-            color: "#9FD9FF",
-            textColor: "#333"
-        },
-        4: { 
-            level: "IV - Light", 
-            description: "Felt indoors by many, outdoors by few. Dishes and windows disturbed.", 
-            color: "#7FFFE6",
-            textColor: "#333"
-        },
-        5: { 
-            level: "V - Moderate", 
-            description: "Felt by nearly everyone. Some dishes and windows broken. Unstable objects overturned.", 
-            color: "#7FFF7F",
-            textColor: "#333"
-        },
-        6: { 
-            level: "VI - Strong", 
-            description: "Felt by all. Many frightened. Some heavy furniture moved. Slight structural damage.", 
-            color: "#FFFF00",
-            textColor: "#333"
-        },
-        7: { 
-            level: "VII - Very Strong", 
-            description: "Most people alarmed. Considerable damage to poorly built structures. Negligible in good buildings.", 
-            color: "#FFD27F",
-            textColor: "#333"
-        },
-        8: { 
-            level: "VIII - Severe", 
-            description: "Considerable damage in ordinary buildings. Great in poorly built structures. Fall of chimneys and monuments.", 
-            color: "#FFA500",
-            textColor: "white"
-        },
-        9: { 
-            level: "IX - Violent", 
-            description: "Considerable damage in specially designed structures. Buildings shifted off foundations. Ground cracked conspicuously.", 
-            color: "#FF7F7F",
-            textColor: "white"
-        },
-        10: { 
-            level: "X - Extreme", 
-            description: "Most masonry and frame structures destroyed. Ground badly cracked. Large landslides.", 
-            color: "#FF0000",
-            textColor: "white"
-        }
+    const d = {
+        1:  { level: "I — Not Felt",      color: "#FFFFFF", textColor: "#333",  description: "Not felt except by very few under especially favorable conditions." },
+        2:  { level: "II — Weak",          color: "#BFCCFF", textColor: "#333",  description: "Felt only by few persons at rest, especially on upper floors." },
+        3:  { level: "III — Weak",         color: "#9FD9FF", textColor: "#333",  description: "Felt quite noticeably indoors. Standing motor cars may rock slightly." },
+        4:  { level: "IV — Light",         color: "#7FFFE6", textColor: "#333",  description: "Felt indoors by many, outdoors by few. Dishes and windows disturbed." },
+        5:  { level: "V — Moderate",       color: "#7FFF7F", textColor: "#333",  description: "Felt by nearly everyone. Some dishes and windows broken. Unstable objects overturned." },
+        6:  { level: "VI — Strong",        color: "#FFFF00", textColor: "#333",  description: "Felt by all. Many frightened. Some heavy furniture moved. Slight structural damage." },
+        7:  { level: "VII — Very Strong",  color: "#FFD27F", textColor: "#333",  description: "Most people alarmed. Considerable damage to poorly built structures." },
+        8:  { level: "VIII — Severe",      color: "#FFA500", textColor: "white", description: "Considerable damage in ordinary buildings. Fall of chimneys and monuments." },
+        9:  { level: "IX — Violent",       color: "#FF7F7F", textColor: "white", description: "Considerable damage in specially designed structures. Ground cracked conspicuously." },
+        10: { level: "X — Extreme",        color: "#FF0000", textColor: "white", description: "Most masonry and frame structures destroyed. Ground badly cracked." }
     };
-    
-    return descriptions[mmi] || descriptions[5];
+    return d[mmi] || d[5];
 }
 
-// MAIN CLICK EVENT HANDLER
+// ============================================
+// POPUP BUILDER
+// ============================================
+function buildPopupHTML(data, source = 'api') {
+    const color = data.color || '#3b82f6';
+    const textColor = data.text_color || data.textColor || '#333';
+
+    return `
+        <div style="min-width: 280px; font-family: 'DM Sans', sans-serif;">
+            <div style="background: ${color}; color: ${textColor}; padding: 12px; margin: -10px -10px 12px -10px; border-radius: 8px 8px 0 0; text-align: center;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700;">${data.intensity_level}</h3>
+            </div>
+            <table style="width: 100%; font-size: 13px; margin-bottom: 12px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 6px 0; color: #666; font-weight: 500;">Location</td>
+                    <td style="padding: 6px 0; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${data.location.lat}°N, ${data.location.lon}°E</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 6px 0; color: #666; font-weight: 500;">PGA Value</td>
+                    <td style="padding: 6px 0; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${data.pga_value} cm/s²</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 6px 0; color: #666; font-weight: 500;">Epicenter Distance</td>
+                    <td style="padding: 6px 0; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${data.distance_from_epicenter_km} km</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #666; font-weight: 500;">Source</td>
+                    <td style="padding: 6px 0; text-align: right; font-size: 11px; color: ${source === 'api' ? '#22c55e' : '#f59e0b'};">
+                        ${source === 'api' ? '✓ PostGIS API' : '⚠ Offline'}
+                    </td>
+                </tr>
+            </table>
+            <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border-left: 3px solid ${color};">
+                <p style="font-size: 12px; color: #555; margin: 0; line-height: 1.5;">
+                    <strong>Expected Effects:</strong><br>${data.description}
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
+// MAIN CLICK HANDLER
+// ============================================
 setTimeout(() => {
     if (typeof map === 'undefined') {
-        console.error('❌ Map not found! Make sure map.js is loaded before click-calculator.js');
+        console.error('Map not initialized');
         return;
     }
 
-    // Remove old click handler
+    checkAPIConnection();
     map.off('click');
 
-    // Add new click handler with intensity calculation
-    map.on('click', function(e) {
+    map.on('click', async function (e) {
         const clickLat = e.latlng.lat;
         const clickLon = e.latlng.lng;
-        
-        // Check if data is loaded
-        if (pgaPointsData.length === 0) {
-            L.popup()
-                .setLatLng(e.latlng)
-                .setContent(`
-                    <div style="padding: 10px; text-align: center;">
-                        <p style="color: #f44336; margin: 0;">⏳ Loading PGA data...</p>
-                        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Please wait a moment</p>
-                    </div>
-                `)
-                .openOn(map);
-            return;
-        }
-        
-        // Find nearest points
-        const nearestPoints = findNearestPoints(clickLat, clickLon, pgaPointsData, 8);
-        
-        // Check if click is too far from data
-        const nearestDistance = nearestPoints[0].distance;
-        const MAX_DISTANCE = 50; // km - only interpolate within 50km of data
-        
-        if (nearestDistance > MAX_DISTANCE) {
-            L.popup()
-                .setLatLng(e.latlng)
-                .setContent(`
-                    <div style="padding: 15px; text-align: center; min-width: 250px;">
-                        <h3 style="color: #999; margin: 0 0 10px 0;">📍 Outside Data Coverage</h3>
-                        <p style="font-size: 13px; color: #666; margin: 0;">
-                            No PGA data available for this location.<br>
-                            <strong>Nearest data point:</strong> ${nearestDistance.toFixed(1)} km away
-                        </p>
-                        <p style="font-size: 12px; color: #999; margin: 10px 0 0 0; font-style: italic;">
-                            This area is outside the M 7.1 Calapan<br>earthquake simulation coverage.
-                        </p>
-                    </div>
-                `)
-                .openOn(map);
-            return;
-        }
-        
-        // Interpolate PGA
-        const pga = interpolateIDW(clickLat, clickLon, nearestPoints);
-        
-        if (pga === null) {
-            L.popup()
-                .setLatLng(e.latlng)
-                .setContent(`
-                    <div style="padding: 10px;">
-                        <p style="color: #f44336;">❌ Unable to calculate PGA</p>
-                        <p style="font-size: 12px; color: #666;">No nearby data points found</p>
-                    </div>
-                `)
-                .openOn(map);
-            return;
-        }
-        
-        // Convert PGA to MMI using Wald et al. (1999)
-        const mmi = pgaToMMI(pga);
-        const intensityInfo = getIntensityDescription(mmi);
-        
-        // Calculate distance from epicenter
-        const distanceKm = haversineDistance(clickLat, clickLon, EPICENTER.lat, EPICENTER.lon);
-        
-        // Create popup content
-        const popupContent = `
-            <div style="min-width: 280px; font-family: 'Segoe UI', sans-serif;">
-                <div style="background: ${intensityInfo.color}; color: ${intensityInfo.textColor}; padding: 12px; margin: -10px -10px 12px -10px; border-radius: 8px 8px 0 0; text-align: center;">
-                    <h3 style="margin: 0; font-size: 18px; font-weight: bold;">${intensityInfo.level}</h3>
-                </div>
-                
-                <table style="width: 100%; font-size: 13px; margin-bottom: 12px; border-collapse: collapse;">
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 6px 0; color: #666;"><strong>📍 Location</strong></td>
-                        <td style="padding: 6px 0; text-align: right;">${clickLat.toFixed(4)}°N, ${clickLon.toFixed(4)}°E</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 6px 0; color: #666;"><strong>📊 PGA Value</strong></td>
-                        <td style="padding: 6px 0; text-align: right;">${pga.toFixed(2)} cm/s²</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 6px 0; color: #666;"><strong>📏 Distance</strong></td>
-                        <td style="padding: 6px 0; text-align: right;">${distanceKm.toFixed(1)} km from epicenter</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 6px 0; color: #666;"><strong>🧮 Method</strong></td>
-                        <td style="padding: 6px 0; text-align: right; font-size: 11px;">IDW Interpolation</td>
-                    </tr>
-                </table>
-                
-                <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; border-left: 4px solid #667eea;">
-                    <p style="font-size: 12px; color: #555; margin: 0; line-height: 1.5;">
-                        <strong>⚠️ Expected Effects:</strong><br>
-                        ${intensityInfo.description}
+
+        // Loading popup
+        L.popup({ maxWidth: 320, className: 'intensity-popup' })
+            .setLatLng(e.latlng)
+            .setContent(`
+                <div style="padding: 20px; text-align: center; min-width: 200px; font-family: 'DM Sans', sans-serif;">
+                    <div style="width: 24px; height: 24px; border: 3px solid #3b82f6; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px;"></div>
+                    <p style="color: #333; font-weight: 600; margin: 0;">Calculating intensity...</p>
+                    <p style="font-size: 11px; color: #999; margin: 4px 0 0;">
+                        ${apiConnected ? 'Querying PostGIS' : 'Offline mode'}
                     </p>
                 </div>
-            </div>
-        `;
-        
-        // Display popup
-        L.popup({
-            maxWidth: 320,
-            className: 'intensity-popup'
-        })
-        .setLatLng(e.latlng)
-        .setContent(popupContent)
-        .openOn(map);
-        
-        // Add temporary marker at click location
+                <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+            `)
+            .openOn(map);
+
+        let popupData = null;
+        let source = 'offline';
+
+        // TRY API FIRST
+        if (apiConnected) {
+            try {
+                const url = `${API_BASE}/api/calculate/intensity?lat=${clickLat}&lon=${clickLon}&num_points=8`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    popupData = data;
+                    source = 'api';
+                } else if (data.status === 'outside_coverage') {
+                    L.popup({ maxWidth: 320 }).setLatLng(e.latlng)
+                        .setContent(`
+                            <div style="padding: 20px; text-align: center; min-width: 250px; font-family: 'DM Sans', sans-serif;">
+                                <div style="font-size: 32px; margin-bottom: 8px;">📍</div>
+                                <h3 style="color: #666; margin: 0 0 8px; font-size: 15px;">Outside Coverage Area</h3>
+                                <p style="font-size: 12px; color: #999; margin: 0; line-height: 1.5;">
+                                    ${data.message || 'No data available for this location'}
+                                    ${data.distance_from_epicenter_km ? '<br>Epicenter distance: ' + data.distance_from_epicenter_km + ' km' : ''}
+                                </p>
+                            </div>
+                        `)
+                        .openOn(map);
+                    return;
+                }
+            } catch (err) {
+                console.warn('API failed, using fallback:', err.message);
+            }
+        }
+
+        // OFFLINE FALLBACK
+        if (!popupData && pgaPointsData.length > 0) {
+            const pga = offlineCalculate(clickLat, clickLon);
+            if (pga !== null) {
+                const mmi = pgaToMMI(pga);
+                const info = getIntensityDescription(mmi);
+                popupData = {
+                    location: { lat: clickLat.toFixed(4), lon: clickLon.toFixed(4) },
+                    pga_value: pga.toFixed(2),
+                    mmi: mmi,
+                    intensity_level: info.level,
+                    description: info.description,
+                    color: info.color,
+                    text_color: info.textColor,
+                    distance_from_epicenter_km: haversineDistance(clickLat, clickLon, 13.4251, 121.0220).toFixed(1)
+                };
+                source = 'offline';
+            }
+        }
+
+        // NO DATA
+        if (!popupData) {
+            L.popup({ maxWidth: 320 }).setLatLng(e.latlng)
+                .setContent(`
+                    <div style="padding: 20px; text-align: center; font-family: 'DM Sans', sans-serif;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🚫</div>
+                        <p style="color: #ef4444; font-weight: 600; margin: 0;">No Data Available</p>
+                        <p style="font-size: 11px; color: #999; margin-top: 4px;">
+                            ${apiConnected ? 'Outside coverage area' : 'API offline — no static data loaded'}
+                        </p>
+                    </div>
+                `).openOn(map);
+            return;
+        }
+
+        // SHOW RESULT
+        L.popup({ maxWidth: 340, className: 'intensity-popup' })
+            .setLatLng(e.latlng)
+            .setContent(buildPopupHTML(popupData, source))
+            .openOn(map);
+
+        // Temporary marker
         const clickMarker = L.circleMarker(e.latlng, {
-            radius: 8,
-            fillColor: intensityInfo.color,
-            color: '#333',
-            weight: 2,
-            opacity: 0.8,
-            fillOpacity: 0.6
+            radius: 8, fillColor: popupData.color || '#3b82f6',
+            color: '#fff', weight: 2, opacity: 0.9, fillOpacity: 0.7
         }).addTo(map);
-        
-        // Remove marker after 5 seconds
-        setTimeout(() => {
-            map.removeLayer(clickMarker);
-        }, 5000);
-        
-        // Log to console for debugging
-        console.log(`Clicked: ${clickLat.toFixed(4)}, ${clickLon.toFixed(4)}`);
-        console.log(`PGA: ${pga.toFixed(2)} cm/s² | Intensity: ${intensityInfo.level}`);
+        setTimeout(() => map.removeLayer(clickMarker), 5000);
+
+        console.log(`[${source.toUpperCase()}] ${clickLat.toFixed(4)}, ${clickLon.toFixed(4)} → PGA: ${popupData.pga_value} | ${popupData.intensity_level}`);
     });
 
-    console.log('✓ Click-to-calculate system loaded (Wald et al. 1999 formula)');
-    console.log('💡 Click anywhere on the map to see intensity calculations');
-}, 100); // Small delay to ensure map is ready
+    console.log('✓ SeiScanPH click calculator ready');
+}, 100);
