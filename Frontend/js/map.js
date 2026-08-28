@@ -1,6 +1,7 @@
 // Initialize the map
 // Centered on Calapan area with appropriate zoom level
 const map = L.map('map').setView([13.4251, 121.0220], 9);
+NearestFault.init(map, 'http://localhost:8000');
 
 // Add Stamen Terrain basemap
 const terrainLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png', {
@@ -23,6 +24,9 @@ let contoursLayer = null;
 let phBoundaryLayer = null;
 let epicenterLayer = null;
 let faultsLayer = null;
+let gebcoLayer = null;
+let researchFaultsLayer = null;
+let bacudLayer = null;
 
 // LOAD PHILIPPINES BOUNDARY (GeoJSON)
 fetch('data/ph_boundary.geojson')
@@ -76,8 +80,8 @@ fetch('data/contours.geojson')
                     `);
                 }
             }
-        }).addTo(map);
-        
+        });
+
         console.log('✓ Contours loaded');
     })
     .catch(error => {
@@ -150,6 +154,37 @@ ActiveFaults.fromStatic('data/active_faults_calapan.geojson')
         console.warn('Active faults not loaded:', error.message);
     });
 
+// LOAD RESEARCH FAULTS (static GeoJSON — purple, distinct from PHIVOLCS)
+ResearchFaults.fromStatic('data/research_faults.geojson')
+    .then(layer => {
+        researchFaultsLayer = layer;
+        console.log('✓ Research faults loaded');
+    })
+    .catch(error => {
+        console.warn('Research faults not loaded:', error.message);
+    });
+
+// LOAD BACUD 1997 TECTONIC MAP (static GeoJSON — Sibuyan Sea, mostly offshore)
+ResearchFaults.fromStatic('data/bacud_tectonic.geojson')
+    .then(layer => {
+        bacudLayer = layer;
+        console.log('✓ Bacud tectonic map loaded');
+    })
+    .catch(error => {
+        console.warn('Bacud tectonic map not loaded:', error.message);
+    });
+
+// LOAD GEBCO BATHYMETRY/TERRAIN (GeoTIFF)
+GebcoTerrain.load('data/gebco_calapan.tif')
+    .then(layer => {
+        gebcoLayer = layer;
+        gebcoLayer.addTo(map);
+        console.log('✓ GEBCO terrain loaded');
+    })
+    .catch(error => {
+        console.warn('GEBCO terrain not loaded:', error.message);
+    });
+
 // ============================================
 // LOAD PGA RASTER (GeoTIFF)
 // Note: This requires georaster and georaster-layer-for-leaflet libraries
@@ -195,7 +230,6 @@ if (typeof parseGeoraster !== 'undefined' && typeof GeoRasterLayer !== 'undefine
                     resolution: 256
                 });
                 
-                pgaRasterLayer.addTo(map);
                 console.log('✓ PGA raster loaded');
                 
                 // Update info panel
@@ -235,9 +269,12 @@ setTimeout(() => {
     // Add layers that are loaded
     if (pgaRasterLayer) overlayMaps["📊 PGA Intensity"] = pgaRasterLayer;
     if (contoursLayer) overlayMaps["📈 Contours"] = contoursLayer;
+    if (gebcoLayer) overlayMaps["🌊 GEBCO Bathymetry"] = gebcoLayer;
     if (phBoundaryLayer) overlayMaps["🗾 Philippines Border"] = phBoundaryLayer;
     if (epicenterLayer) overlayMaps["⭐ Epicenter"] = epicenterLayer;
     if (faultsLayer) overlayMaps["⚠️ Active Faults"] = faultsLayer;
+    if (researchFaultsLayer) overlayMaps["🔬 Research Faults (Batangas)"] = researchFaultsLayer;
+    if (bacudLayer) overlayMaps["🌊 Bacud 1997 Tectonic Map"] = bacudLayer;
     
     L.control.layers(baseMaps, overlayMaps, {
         position: 'topright',

@@ -3,212 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeiScanPH - Earthquake Hazard Map</title>
+    <title>SeiScanPH — Earthquake Hazard Intelligence</title>
+    <meta name="description" content="SeiScanPH is an interactive earthquake hazard mapping platform for the Philippines — estimating ground-shaking intensity from seismic scenarios.">
 
-    <!-- Fonts -->
+    <!-- Fonts (same as the map) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Landing-only styles (does NOT load style.css, so no map-UI collisions) -->
+    <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
 
-    <!-- HEADER -->
-    <header id="header">
-        <div class="header-left">
+    <!-- NAV -->
+    <nav class="nav">
+        <div class="nav-inner">
             <div class="logo">
                 <div class="logo-icon">S</div>
-                <div>
+                <div class="logo-text">
                     <h1>SeiScanPH</h1>
-                    <p class="tagline">Earthquake Hazard Intelligence</p>
+                    <p>Earthquake Hazard Intelligence</p>
                 </div>
             </div>
-        </div>
-
-        <div class="header-center">
-            <div class="search-container">
-                <div class="search-box">
-                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" id="search-input" placeholder="Search location — e.g. Calapan, Manila, Batangas..." autocomplete="off">
-                    <button id="search-btn" onclick="searchLocation()">Go</button>
-                </div>
-                <div id="search-results" class="search-results"></div>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#how">How it works</a>
+                <a href="#credits">Credits</a>
+                <a href="map.html" class="btn btn-primary btn-nav">Open Map</a>
             </div>
         </div>
+    </nav>
 
-        <div class="header-right">
-            <div class="api-status" id="api-status">
-                <span class="status-dot"></span>
-                <span class="status-text">Checking...</span>
-            </div>
+    <!-- HERO -->
+    <header class="hero">
+        <div class="container">
+            <span class="eyebrow">Philippine Seismic Hazard</span>
+            <h1>SeiScanPH</h1>
+            <p class="tagline">
+                An interactive platform for visualizing earthquake ground-shaking
+                intensity across the Philippines — from scenario to map.
+            </p>
+            <a href="map.html" class="btn btn-primary">Explore the Hazard Map →</a>
         </div>
     </header>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-        </button>
+    <!-- ABOUT -->
+    <section class="section" id="about">
+        <div class="container">
+            <div class="section-eyebrow">About</div>
+            <h2>What is SeiScanPH?</h2>
+            <p class="lead">
+                SeiScanPH is an earthquake hazard mapping tool that estimates how strongly
+                the ground shakes at any location during a modeled seismic scenario. It turns
+                raw peak ground acceleration (PGA) data into an intuitive, color-coded intensity
+                map based on the Modified Mercalli Intensity (MMI) scale. The goal is to make
+                seismic hazard information accessible and easy to interpret for planners,
+                researchers, and the public.
+            </p>
+        </div>
+    </section>
 
-        <div class="sidebar-content" id="sidebar-content">
-            <!-- Scenario Info -->
-            <div class="sidebar-section">
-                <div class="section-label">ACTIVE SCENARIO</div>
-                <div class="scenario-card">
-                    <div class="scenario-magnitude">M 7.1</div>
-                    <div class="scenario-details">
-                        <div class="scenario-name">Calapan Earthquake</div>
-                        <div class="scenario-location">Oriental Mindoro</div>
-                        <div class="scenario-meta">
-                            <span>Depth: 10 km</span>
-                            <span>•</span>
-                            <span>13.43°N, 121.02°E</span>
-                        </div>
-                    </div>
+    <!-- HOW IT WORKS -->
+    <section class="section" id="how">
+        <div class="container">
+            <div class="section-eyebrow">How it works</div>
+            <h2>From database to map</h2>
+            <p class="lead">
+                SeiScanPH is built in three simple layers. Hazard data lives in a spatial
+                database, an API serves it on request, and the map turns it into an
+                interactive visualization you can click and explore.
+            </p>
+
+            <div class="steps">
+                <div class="step-card">
+                    <div class="step-num">Layer 1</div>
+                    <h3>Database</h3>
+                    <p>A spatial database stores the ground-motion data, fault lines, and terrain used in each earthquake scenario.</p>
+                    <div class="step-arrow">↓ served to</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">Layer 2</div>
+                    <h3>API</h3>
+                    <p>An API receives a location, looks up nearby ground-motion values, and returns the estimated intensity for that spot.</p>
+                    <div class="step-arrow">↓ rendered by</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">Layer 3</div>
+                    <h3>Map</h3>
+                    <p>The interactive map displays the results — click anywhere to see the expected shaking intensity and effects.</p>
                 </div>
             </div>
 
-            <!-- Status -->
-            <div class="sidebar-section">
-                <div class="section-label">DATA STATUS</div>
-                <div id="map-info" class="status-info">
-                    <p>Connecting to API...</p>
-                </div>
-            </div>
-
-            <!-- How to use -->
-            <div class="sidebar-section">
-                <div class="section-label">HOW TO USE</div>
-                <div class="instructions">
-                    <div class="instruction-step">
-                        <span class="step-num">1</span>
-                        <span>Search a location or click the map</span>
-                    </div>
-                    <div class="instruction-step">
-                        <span class="step-num">2</span>
-                        <span>View earthquake intensity (MMI)</span>
-                    </div>
-                    <div class="instruction-step">
-                        <span class="step-num">3</span>
-                        <span>Read expected effects and PGA values</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Legend -->
-            <div class="sidebar-section">
-                <div class="section-label">INTENSITY SCALE</div>
-                <div class="legend-items">
-                    <div class="legend-row"><span class="legend-color" style="background:#FF0000"></span><span>X — Extreme</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FF7F7F"></span><span>IX — Violent</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFA500"></span><span>VIII — Severe</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFD27F"></span><span>VII — Very Strong</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFFF00"></span><span>VI — Strong</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#7FFF7F"></span><span>V — Moderate</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#7FFFE6"></span><span>IV — Light</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#9FD9FF"></span><span>III — Weak</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#BFCCFF"></span><span>II — Weak</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFFFFF; border: 1px solid #ccc"></span><span>I — Not Felt</span></div>
-                </div>
-            </div>
-
-            <!-- Credits -->
-            <div class="sidebar-section sidebar-footer">
-                <div class="section-label">METHODOLOGY</div>
-                <p class="credit-text">PGA → MMI: Wald et al. (1999)</p>
-                <p class="credit-text">Interpolation: IDW (8 nearest points)</p>
-                <p class="credit-text">Database: PostGIS + FastAPI</p>
+            <div class="science-note">
+                <h3>The science behind the intensity</h3>
+                <p>
+                    Ground shaking is measured as peak ground acceleration (PGA), but PGA on its
+                    own is hard to interpret. SeiScanPH converts PGA into the Modified Mercalli
+                    Intensity (MMI) scale — the familiar “weak” to “extreme” ratings — using the
+                    relationship from <code>Wald et al. (1999)</code>, which maps instrumental
+                    ground motion to felt intensity.
+                </p>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- MAP -->
-    <div id="map"></div>
+    <!-- DATA SOURCES & CREDITS -->
+    <section class="section" id="credits">
+        <div class="container">
+            <div class="section-eyebrow">Data Sources &amp; Credits</div>
+            <h2>Data &amp; references</h2>
+            <p class="lead">
+                SeiScanPH builds on public seismic, bathymetric, and scientific datasets.
+                Full attributions will be listed here.
+            </p>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
-    <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
-    <script src="js/active-faults.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/click-calculator.js"></script>
+            <div class="credits-grid">
+                <div class="credit-card">
+                    <h3>PHIVOLCS</h3>
+                    <p>Seismic and fault data source.</p>
+                    <span class="placeholder">Placeholder — details to follow</span>
+                </div>
+                <div class="credit-card">
+                    <h3>GEBCO</h3>
+                    <p>Bathymetric / terrain elevation data.</p>
+                    <span class="placeholder">Placeholder — details to follow</span>
+                </div>
+                <div class="credit-card">
+                    <h3>Research papers</h3>
+                    <p>Wald et al. (1999) and related methodology references.</p>
+                    <span class="placeholder">Placeholder — details to follow</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <!-- Search & Sidebar Logic -->
-    <script>
-        // SEARCH - Uses Nominatim (free OpenStreetMap geocoder)
-        async function searchLocation() {
-            const query = document.getElementById('search-input').value.trim();
-            if (!query) return;
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <p>SeiScanPH — Earthquake Hazard Intelligence. &nbsp;·&nbsp; <a href="map.html">Open the map</a></p>
+        </div>
+    </footer>
 
-            const resultsDiv = document.getElementById('search-results');
-            resultsDiv.innerHTML = '<div class="search-loading">Searching...</div>';
-            resultsDiv.style.display = 'block';
-
-            try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`;
-                const response = await fetch(url, {
-                    headers: { 'Accept-Language': 'en' }
-                });
-                const results = await response.json();
-
-                if (results.length === 0) {
-                    resultsDiv.innerHTML = '<div class="search-no-results">No results found</div>';
-                    return;
-                }
-
-                resultsDiv.innerHTML = results.map(r => `
-                    <div class="search-result-item" onclick="goToLocation(${r.lat}, ${r.lon}, '${r.display_name.replace(/'/g, "\\'")}')">
-                        <div class="result-name">${r.display_name.split(',').slice(0, 3).join(',')}</div>
-                        <div class="result-coords">${parseFloat(r.lat).toFixed(4)}°N, ${parseFloat(r.lon).toFixed(4)}°E</div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                resultsDiv.innerHTML = '<div class="search-no-results">Search failed — check connection</div>';
-            }
-        }
-
-        function goToLocation(lat, lon, name) {
-            document.getElementById('search-results').style.display = 'none';
-            document.getElementById('search-input').value = name.split(',').slice(0, 2).join(',');
-            map.flyTo([lat, lon], 12, { duration: 1.5 });
-
-            // Auto-trigger intensity calculation at that location
-            setTimeout(() => {
-                map.fire('click', { latlng: L.latLng(lat, lon) });
-            }, 1800);
-        }
-
-        // Enter key triggers search
-        document.getElementById('search-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') searchLocation();
-        });
-
-        // Close search results when clicking elsewhere
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.search-container')) {
-                document.getElementById('search-results').style.display = 'none';
-            }
-        });
-
-        // SIDEBAR TOGGLE
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.getElementById('sidebar-toggle');
-            sidebar.classList.toggle('collapsed');
-
-            toggle.innerHTML = sidebar.classList.contains('collapsed')
-                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-        }
-    </script>
 </body>
 </html>

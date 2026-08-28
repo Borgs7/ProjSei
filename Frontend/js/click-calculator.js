@@ -175,7 +175,9 @@ setTimeout(() => {
     }
 
     checkAPIConnection();
-    map.off('click');
+    // NOTE: do NOT call map.off('click') here — it would remove the
+    // NearestFault handler registered in map.js, disabling the dashed
+    // connector. One click is meant to trigger BOTH features.
 
     map.on('click', async function (e) {
         const clickLat = e.latlng.lat;
