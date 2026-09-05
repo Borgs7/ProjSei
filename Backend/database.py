@@ -1,4 +1,4 @@
-import os
+﻿import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,20 +9,18 @@ try:
 except ImportError:
     pass  # run: pip install python-dotenv
 
-URL_DATABASE = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://postgres:M1L3t_yes!@localhost:5432/SeiScanDB"  # fallback — remove after setting .env
-)
+URL_DATABASE = os.environ.get("DATABASE_URL")
+
+if not URL_DATABASE:
+    raise RuntimeError(
+        "DATABASE_URL not set. Create Backend/.env with your database connection string."
+    )
 
 engine = create_engine(URL_DATABASE, echo=False)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Using the non-deprecated import
 Base = declarative_base()
 
 
-# Dependency for FastAPI routes
 def get_db():
     db = SessionLocal()
     try:
