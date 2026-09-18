@@ -1,8 +1,9 @@
 /* ============================================
-   SEISCANPH - Landing Page
-   Self-contained styles. Palette/fonts reused from style.css,
-   but this file is loaded ALONE on the landing page (not style.css)
-   so there are no collisions with the map UI.
+   SEISCANPH - Shared site styles
+   Used by: index.html, about.html, gallery.html, resources.html
+   (NOT the map — the map uses css/style.css. Loading these two
+   together is intentionally avoided so there are no collisions.)
+   Palette/fonts mirror css/style.css for a consistent look.
    ============================================ */
 
 /* Reset */
@@ -22,12 +23,16 @@
     --text-muted: #5a6f87;
     --accent: #3b82f6;
     --accent-hover: #2563eb;
+    --warning: #f59e0b;
     --border: #233345;
+    --header-bg: #1e2a3a;   /* lighter slate-blue so the logo reads clearly; nudge to #24344a if still too dark */
+    --nav-link: #aab8cc;    /* nav links: a touch brighter than --text-secondary for contrast on --header-bg */
     --radius: 8px;
     --font-body: 'DM Sans', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     --max-width: 1080px;
+    --header-height: 64px;
 }
 
 html {
@@ -53,73 +58,67 @@ a {
     padding: 0 24px;
 }
 
-/* ---- NAV ---- */
-.nav {
+/* ============================================
+   SHARED HEADER  (identical markup on every page)
+   ============================================ */
+.site-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(15, 25, 35, 0.85);
-    backdrop-filter: blur(10px);
+    background: var(--header-bg);
     border-bottom: 1px solid var(--border);
 }
 
-.nav-inner {
+.site-header-inner {
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: 14px 24px;
+    min-height: var(--header-height);
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
 }
 
-.logo {
-    display: flex;
+/* Logo */
+.logo-link {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
 }
 
-.logo-icon {
-    width: 34px;
-    height: 34px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 17px;
-    color: #fff;
-}
-
-.logo-text h1 {
-    font-size: 17px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-}
-
-.logo-text p {
-    font-size: 11px;
-    color: var(--text-muted);
-    letter-spacing: 0.02em;
+.logo-img {
+    display: block;
+    height: 40px;      /* fixed header height; width scales with aspect ratio */
+    width: auto;
+    border-radius: 6px;
 }
 
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 22px;
     font-size: 14px;
 }
 
 .nav-links a {
-    color: var(--text-secondary);
+    color: var(--nav-link);
     transition: color 0.15s ease;
+    white-space: nowrap;
 }
 
 .nav-links a:hover {
     color: var(--text-primary);
 }
 
-/* ---- BUTTONS ---- */
+.nav-links a.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -130,7 +129,7 @@ a {
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-primary {
@@ -144,17 +143,24 @@ a {
     transform: translateY(-1px);
 }
 
-.btn-nav {
-    padding: 8px 16px;
-    font-size: 14px;
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
 }
 
-/* ---- HERO ---- */
+.btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ============================================
+   HERO
+   ============================================ */
 .hero {
     padding: 100px 0 90px;
     text-align: center;
-    background:
-        radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12), transparent 60%);
+    background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12), transparent 60%);
     border-bottom: 1px solid var(--border);
 }
 
@@ -186,7 +192,9 @@ a {
     margin: 20px auto 36px;
 }
 
-/* ---- SECTIONS ---- */
+/* ============================================
+   GENERIC SECTIONS
+   ============================================ */
 .section {
     padding: 72px 0;
     border-bottom: 1px solid var(--border);
@@ -214,136 +222,190 @@ a {
     font-size: 1.05rem;
 }
 
-/* ---- HOW IT WORKS ---- */
-.steps {
+.section-actions {
+    margin-top: 28px;
+}
+
+/* ============================================
+   GALLERY  (static row of placeholders)
+   ============================================ */
+.gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
     margin-top: 36px;
 }
 
-.step-card {
+.gallery-item {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 24px;
-}
-
-.step-card .step-num {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--accent);
-    margin-bottom: 12px;
-}
-
-.step-card h3 {
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-}
-
-.step-card p {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-
-.step-card .step-arrow {
     color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    margin-top: 12px;
-}
-
-.science-note {
-    margin-top: 32px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-}
-
-.science-note h3 {
-    font-size: 1rem;
-    margin-bottom: 8px;
-}
-
-.science-note p {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-
-.science-note code {
-    font-family: var(--font-mono);
     font-size: 0.85rem;
-    color: var(--text-primary);
-    background: var(--bg-primary);
-    padding: 2px 6px;
-    border-radius: 4px;
+    letter-spacing: 0.04em;
 }
 
-/* ---- CREDITS ---- */
-.credits-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    margin-top: 36px;
+/* ============================================
+   DATA & RESOURCES  (source badges)
+   ============================================ */
+.sources-label {
+    color: var(--text-secondary);
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 1.05rem;
 }
 
-.credit-card {
+.source-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.source-badge {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-}
-
-.credit-card h3 {
-    font-size: 1.05rem;
-    margin-bottom: 8px;
-}
-
-.credit-card p {
-    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 8px 16px;
     font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
-.credit-card .placeholder {
-    display: inline-block;
-    margin-top: 12px;
+/* ============================================
+   SHARED FOOTER  (identical markup on every page)
+   ============================================ */
+.site-footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+}
+
+.site-footer-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 40px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 32px;
+}
+
+.footer-left {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.footer-left .footer-org {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.footer-left p {
+    margin-bottom: 4px;
+}
+
+.footer-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-partners-label {
     font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--warning, #f59e0b);
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px dashed var(--border);
-    padding: 4px 10px;
-    border-radius: 4px;
+    color: var(--text-muted);
 }
 
-/* ---- FOOTER ---- */
-.footer {
-    padding: 40px 0;
+.partner-logos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.partner-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 48px;
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+}
+
+/* ============================================
+   SUBPAGE HEADER + PLACEHOLDER
+   (about.html, gallery.html, resources.html)
+   ============================================ */
+.page-header {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08), transparent 60%);
+}
+
+.page-header h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.page-header p {
+    color: var(--text-secondary);
+    margin-top: 12px;
+    max-width: 640px;
+}
+
+.page-body {
+    padding: 56px 0 80px;
+    min-height: 30vh;
+}
+
+.coming-soon {
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px 24px;
     text-align: center;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
-.footer a {
-    color: var(--text-secondary);
-}
-
-/* ---- RESPONSIVE ---- */
-@media (max-width: 640px) {
-    .nav-links {
-        gap: 14px;
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 760px) {
+    .site-header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
-    .nav-links a:not(.btn) {
-        display: none;
+    .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
     .hero {
         padding: 70px 0 60px;
     }
     .section {
         padding: 56px 0;
+    }
+}
+
+@media (max-width: 460px) {
+    .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .nav-links {
+        gap: 14px;
     }
 }

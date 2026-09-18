@@ -10,32 +10,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Landing-only styles (does NOT load style.css, so no map-UI collisions) -->
+    <!-- Shared site styles (does NOT load the map's style.css, so no collisions) -->
     <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
 
-    <!-- NAV -->
-    <nav class="nav">
-        <div class="nav-inner">
-            <div class="logo">
-                <div class="logo-icon">S</div>
-                <div class="logo-text">
-                    <h1>SeiScanPH</h1>
-                    <p>Earthquake Hazard Intelligence</p>
-                </div>
-            </div>
-            <div class="nav-links">
-                <a href="#about">About</a>
-                <a href="#how">How it works</a>
-                <a href="#credits">Credits</a>
-                <a href="map.html" class="btn btn-primary btn-nav">Open Map</a>
-            </div>
+    <!-- ============================================================
+         SHARED HEADER — keep identical across index/about/gallery/resources
+         Swap .logo-placeholder for <img src="..." alt="SeiScanPH"> later.
+         ============================================================ -->
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="logo-link" aria-label="SeiScanPH home">
+                <img src="images/logo.png" alt="SeiScanPH" class="logo-img">
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" class="active" aria-current="page">Home</a>
+                <a href="map.html">Hazard Map</a>
+                <a href="about.html">About Us</a>
+                <a href="gallery.html">Gallery</a>
+                <a href="resources.html">Resources</a>
+            </nav>
         </div>
-    </nav>
+    </header>
 
     <!-- HERO -->
-    <header class="hero">
+    <section class="hero">
         <div class="container">
             <span class="eyebrow">Philippine Seismic Hazard</span>
             <h1>SeiScanPH</h1>
@@ -45,102 +45,94 @@
             </p>
             <a href="map.html" class="btn btn-primary">Explore the Hazard Map →</a>
         </div>
-    </header>
+    </section>
 
-    <!-- ABOUT -->
+    <!-- ABOUT US (summary) -->
     <section class="section" id="about">
         <div class="container">
-            <div class="section-eyebrow">About</div>
+            <div class="section-eyebrow">About Us</div>
             <h2>What is SeiScanPH?</h2>
             <p class="lead">
-                SeiScanPH is an earthquake hazard mapping tool that estimates how strongly
-                the ground shakes at any location during a modeled seismic scenario. It turns
-                raw peak ground acceleration (PGA) data into an intuitive, color-coded intensity
-                map based on the Modified Mercalli Intensity (MMI) scale. The goal is to make
-                seismic hazard information accessible and easy to interpret for planners,
-                researchers, and the public.
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. SeiScanPH turns
+                earthquake ground-motion data into an intuitive, color-coded hazard map so
+                seismic risk is easier to see and understand. Praesent et hazard placeholder
+                copy — full description to be added later.
             </p>
-        </div>
-    </section>
-
-    <!-- HOW IT WORKS -->
-    <section class="section" id="how">
-        <div class="container">
-            <div class="section-eyebrow">How it works</div>
-            <h2>From database to map</h2>
-            <p class="lead">
-                SeiScanPH is built in three simple layers. Hazard data lives in a spatial
-                database, an API serves it on request, and the map turns it into an
-                interactive visualization you can click and explore.
-            </p>
-
-            <div class="steps">
-                <div class="step-card">
-                    <div class="step-num">Layer 1</div>
-                    <h3>Database</h3>
-                    <p>A spatial database stores the ground-motion data, fault lines, and terrain used in each earthquake scenario.</p>
-                    <div class="step-arrow">↓ served to</div>
-                </div>
-                <div class="step-card">
-                    <div class="step-num">Layer 2</div>
-                    <h3>API</h3>
-                    <p>An API receives a location, looks up nearby ground-motion values, and returns the estimated intensity for that spot.</p>
-                    <div class="step-arrow">↓ rendered by</div>
-                </div>
-                <div class="step-card">
-                    <div class="step-num">Layer 3</div>
-                    <h3>Map</h3>
-                    <p>The interactive map displays the results — click anywhere to see the expected shaking intensity and effects.</p>
-                </div>
-            </div>
-
-            <div class="science-note">
-                <h3>The science behind the intensity</h3>
-                <p>
-                    Ground shaking is measured as peak ground acceleration (PGA), but PGA on its
-                    own is hard to interpret. SeiScanPH converts PGA into the Modified Mercalli
-                    Intensity (MMI) scale — the familiar “weak” to “extreme” ratings — using the
-                    relationship from <code>Wald et al. (1999)</code>, which maps instrumental
-                    ground motion to felt intensity.
-                </p>
+            <div class="section-actions">
+                <a href="about.html" class="btn btn-outline">Learn More →</a>
             </div>
         </div>
     </section>
 
-    <!-- DATA SOURCES & CREDITS -->
-    <section class="section" id="credits">
+    <!-- GALLERY -->
+    <section class="section" id="gallery">
         <div class="container">
-            <div class="section-eyebrow">Data Sources &amp; Credits</div>
-            <h2>Data &amp; references</h2>
-            <p class="lead">
-                SeiScanPH builds on public seismic, bathymetric, and scientific datasets.
-                Full attributions will be listed here.
-            </p>
+            <div class="section-eyebrow">Gallery</div>
+            <h2>Gallery</h2>
+            <p class="lead">A look at SeiScanPH maps, scenarios, and outputs.</p>
 
-            <div class="credits-grid">
-                <div class="credit-card">
-                    <h3>PHIVOLCS</h3>
-                    <p>Seismic and fault data source.</p>
-                    <span class="placeholder">Placeholder — details to follow</span>
-                </div>
-                <div class="credit-card">
-                    <h3>GEBCO</h3>
-                    <p>Bathymetric / terrain elevation data.</p>
-                    <span class="placeholder">Placeholder — details to follow</span>
-                </div>
-                <div class="credit-card">
-                    <h3>Research papers</h3>
-                    <p>Wald et al. (1999) and related methodology references.</p>
-                    <span class="placeholder">Placeholder — details to follow</span>
-                </div>
+            <!-- Static placeholder row for now. Real images added later.
+                 NOTE: carousel / horizontal-scroll behavior would go here later
+                 (e.g. wrap .gallery-grid in a scroll container + JS controls). -->
+            <div class="gallery-grid">
+                <div class="gallery-item">Image</div>
+                <div class="gallery-item">Image</div>
+                <div class="gallery-item">Image</div>
+                <div class="gallery-item">Image</div>
+                <div class="gallery-item">Image</div>
+                <div class="gallery-item">Image</div>
+            </div>
+
+            <div class="section-actions">
+                <a href="gallery.html" class="btn btn-outline">View All →</a>
             </div>
         </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="footer">
+    <!-- DATA & RESOURCES -->
+    <section class="section" id="resources">
         <div class="container">
-            <p>SeiScanPH — Earthquake Hazard Intelligence. &nbsp;·&nbsp; <a href="map.html">Open the map</a></p>
+            <div class="section-eyebrow">Data &amp; Resources</div>
+            <h2>Built on trusted open data</h2>
+            <p class="sources-label">Our data sources:</p>
+
+            <div class="source-badges">
+                <span class="source-badge">GEBCO</span>
+                <span class="source-badge">World Stress Map</span>
+                <span class="source-badge">WGM (World Gravity Map)</span>
+                <span class="source-badge">WDMAM</span>
+                <span class="source-badge">GCMT</span>
+                <span class="source-badge">SRTM</span>
+                <span class="source-badge">ISC</span>
+            </div>
+
+            <div class="section-actions">
+                <a href="resources.html" class="btn btn-outline">View Data &amp; Resources →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SHARED FOOTER — keep identical across index/about/gallery/resources
+         Swap .partner-logo boxes for <img> logos later.
+         ============================================================ -->
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div class="footer-left">
+                <div class="footer-org">SeiScanPH</div>
+                <p>[Address]</p>
+                <p>[Contact]</p>
+                <p>[Email]</p>
+            </div>
+            <div class="footer-right">
+                <div class="footer-partners-label">In partnership with</div>
+                <div class="partner-logos">
+                    <div class="partner-logo">DOST</div>
+                    <div class="partner-logo">UPD</div>
+                    <div class="partner-logo">NIGS</div>
+                    <div class="partner-logo">PHIVOLCS</div>
+                </div>
+            </div>
         </div>
     </footer>
 
