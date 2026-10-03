@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeiScanPH — Earthquake Hazard Intelligence</title>
-    <meta name="description" content="SeiScanPH is an interactive earthquake hazard mapping platform for the Philippines — estimating ground-shaking intensity from seismic scenarios.">
+    <meta name="description" content="SeiScanPH is an interactive earthquake and tsunami hazard platform for the Philippines — estimating ground-shaking intensity from seismic scenarios.">
 
-    <!-- Fonts (same as the map) -->
+    <!-- Fonts: Archivo (headings/nav/buttons), Public Sans (body), JetBrains Mono (labels) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=JetBrains+Mono:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Shared site styles (does NOT load the map's style.css, so no collisions) -->
     <link rel="stylesheet" href="css/landing.css">
@@ -17,14 +18,18 @@
 
     <!-- ============================================================
          SHARED HEADER — keep identical across index/about/gallery/resources
-         Swap .logo-placeholder for <img src="..." alt="SeiScanPH"> later.
+         (only the .active nav link differs per page)
          ============================================================ -->
     <header class="site-header">
         <div class="site-header-inner">
-            <a href="index.html" class="logo-link" aria-label="SeiScanPH home">
-                <img src="images/logo.png" alt="SeiScanPH" class="logo-img">
+            <a href="index.html" class="brand" aria-label="SeiScanPH home">
+                <img src="images/logo.png" alt="" class="logo-img">
+                <span class="brand-text">
+                    <span class="brand-name">SeiScanPH</span>
+                    <span class="brand-sub">Seismic Hazard · PH</span>
+                </span>
             </a>
-            <nav class="nav-links">
+            <nav class="nav-links" aria-label="Main">
                 <a href="index.html" class="active" aria-current="page">Home</a>
                 <a href="map.html">Hazard Map</a>
                 <a href="about.html">About Us</a>
@@ -37,44 +42,85 @@
     <!-- HERO -->
     <section class="hero">
         <div class="container">
-            <span class="eyebrow">Philippine Seismic Hazard</span>
-            <h1>SeiScanPH</h1>
-            <p class="tagline">
-                An interactive platform for visualizing earthquake ground-shaking
-                intensity across the Philippines — from scenario to map.
-            </p>
-            <a href="map.html" class="btn btn-primary">Explore the Hazard Map →</a>
+            <div class="hero-content">
+                <p class="eyebrow">Philippine Seismic Hazard</p>
+                <h1>Know the shaking <span class="accent">before</span> it happens.</h1>
+                <p class="tagline">
+                    An interactive platform for visualizing earthquake ground-shaking
+                    intensity across the Philippines — from scenario to map.
+                </p>
+                <div class="hero-actions">
+                    <a href="map.html" class="btn btn-primary">Explore the Hazard Map →</a>
+                    <a href="about.html" class="text-link">How it works</a>
+                </div>
+                <ul class="hero-stats">
+                    <li class="stat">
+                        <span class="stat-value">25,668</span>
+                        <span class="stat-label">PGA data points</span>
+                    </li>
+                    <li class="stat">
+                        <span class="stat-value">6,340</span>
+                        <span class="stat-label">Active fault traces</span>
+                    </li>
+                    <li class="stat">
+                        <span class="stat-value">M&nbsp;7.1</span>
+                        <span class="stat-label">Calapan scenario</span>
+                    </li>
+                </ul>
+            </div>
         </div>
+
+        <!-- Decorative seismograph trace (stretches full width) -->
+        <svg class="hero-seismo" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <polyline points="0,30 150,30 158,28 164,32 170,29 176,31 182,30 330,30 338,27 344,33 350,28 356,32 362,30 520,30 528,26 534,35 540,22 546,40 552,14 558,48 564,6 570,54 576,12 582,46 588,20 594,40 600,25 606,35 612,27 618,33 624,29 630,31 640,30 760,30 768,28 774,32 780,29 786,31 792,30 950,30 958,27 964,33 970,29 976,31 982,30 1200,30"/>
+        </svg>
     </section>
 
     <!-- ABOUT US (summary) -->
-    <section class="section" id="about">
-        <div class="container">
-            <div class="section-eyebrow">About Us</div>
-            <h2>What is SeiScanPH?</h2>
-            <p class="lead">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. SeiScanPH turns
-                earthquake ground-motion data into an intuitive, color-coded hazard map so
-                seismic risk is easier to see and understand. Praesent et hazard placeholder
-                copy — full description to be added later.
-            </p>
-            <div class="section-actions">
-                <a href="about.html" class="btn btn-outline">Learn More →</a>
+    <section class="section section-white" id="about">
+        <div class="container about-grid">
+            <div class="about-copy">
+                <p class="eyebrow">About Us</p>
+                <h2>Making seismic hazard legible.</h2>
+                <p class="lead">
+                    SeiScan_PH is a DOST-funded research project under the “Paleoseismology and Hazard Assessment of Seismogenic Sources in Northern Luzon, Philippines” 
+                    program and the MECO–TECO Joint Research Project initiative. 
+                    The project focuses on mapping and characterizing active and previously unmapped faults in the Batangas–Mindoro–Marinduque region and adjacent offshore areas, 
+                    including the Verde Passage Fault, Sibuyan Sea Fault, and related fault structures, using seismic imaging and integrated geophysical datasets.
+
+                </p>
+                <a href="about.html" class="text-link">Learn more about the project →</a>
             </div>
+
+            <aside class="feature-card">
+                <h3>What the platform does</h3>
+                <ul class="check-list">
+                    <li>Calculates ground-shaking intensity (MMI) at any point using the Wald et al. (1999) relationship.</li>
+                    <li>Maps PHIVOLCS active faults and returns the nearest fault to any location.</li>
+                    <li>Grows scenario by scenario, with bathymetry and terrain for the offshore picture.</li>
+                </ul>
+            </aside>
         </div>
     </section>
 
     <!-- GALLERY -->
-    <section class="section" id="gallery">
+    <section class="section section-cream" id="gallery">
         <div class="container">
-            <div class="section-eyebrow">Gallery</div>
-            <h2>Gallery</h2>
-            <p class="lead">A look at SeiScanPH maps, scenarios, and outputs.</p>
+            <div class="section-head">
+                <div>
+                    <p class="eyebrow">Gallery</p>
+                    <h2>From the field &amp; the lab.</h2>
+                    <p class="lead">Conferences, fieldwork, and the people behind the platform.</p>
+                </div>
+                <div class="gallery-controls">
+                    <button type="button" class="gallery-btn" id="gallery-prev" aria-label="Scroll gallery left">‹</button>
+                    <button type="button" class="gallery-btn" id="gallery-next" aria-label="Scroll gallery right">›</button>
+                </div>
+            </div>
 
-            <!-- Static placeholder row for now. Real images added later.
-                 NOTE: carousel / horizontal-scroll behavior would go here later
-                 (e.g. wrap .gallery-grid in a scroll container + JS controls). -->
-            <div class="gallery-grid">
+            <!-- Placeholder tiles — swap each for an <img> later.
+                 The ‹ › buttons are wired in js/landing.js; the row also scrolls by swipe/trackpad. -->
+            <div class="gallery-track" id="gallery-track" role="region" aria-label="Gallery photos" tabindex="0">
                 <div class="gallery-item">Image</div>
                 <div class="gallery-item">Image</div>
                 <div class="gallery-item">Image</div>
@@ -83,58 +129,80 @@
                 <div class="gallery-item">Image</div>
             </div>
 
-            <div class="section-actions">
-                <a href="gallery.html" class="btn btn-outline">View All →</a>
+            <div class="section-link">
+                <a href="gallery.html" class="text-link">View all photos →</a>
             </div>
         </div>
     </section>
 
     <!-- DATA & RESOURCES -->
-    <section class="section" id="resources">
+    <section class="section section-white" id="resources">
         <div class="container">
-            <div class="section-eyebrow">Data &amp; Resources</div>
-            <h2>Built on trusted open data</h2>
-            <p class="sources-label">Our data sources:</p>
+            <p class="eyebrow">Data &amp; Resources</p>
+            <h2>Built on open, authoritative data.</h2>
 
-            <div class="source-badges">
-                <span class="source-badge">GEBCO</span>
-                <span class="source-badge">World Stress Map</span>
-                <span class="source-badge">WGM (World Gravity Map)</span>
-                <span class="source-badge">WDMAM</span>
-                <span class="source-badge">GCMT</span>
-                <span class="source-badge">SRTM</span>
-                <span class="source-badge">ISC</span>
-            </div>
+            <ul class="source-grid">
+                <li class="source-card"><div><span class="source-name">GEBCO</span><span class="source-desc">Global bathymetry &amp; terrain grid</span></div></li>
+                <li class="source-card"><div><span class="source-name">World Stress Map</span><span class="source-desc">Crustal stress orientations</span></div></li>
+                <li class="source-card"><div><span class="source-name">WGM</span><span class="source-desc">World gravity model</span></div></li>
+                <li class="source-card"><div><span class="source-name">WDMAM</span><span class="source-desc">World digital magnetic anomaly map</span></div></li>
+                <li class="source-card"><div><span class="source-name">GCMT</span><span class="source-desc">Global centroid moment tensor catalog</span></div></li>
+                <li class="source-card"><div><span class="source-name">SRTM</span><span class="source-desc">Shuttle radar elevation / topography</span></div></li>
+                <li class="source-card"><div><span class="source-name">ISC</span><span class="source-desc">International Seismological Centre catalog</span></div></li>
+            </ul>
 
-            <div class="section-actions">
-                <a href="resources.html" class="btn btn-outline">View Data &amp; Resources →</a>
+            <div class="section-link">
+                <a href="resources.html" class="text-link">View Data &amp; Resources →</a>
             </div>
         </div>
     </section>
 
     <!-- ============================================================
          SHARED FOOTER — keep identical across index/about/gallery/resources
-         Swap .partner-logo boxes for <img> logos later.
+         Partner logos live in images/partners/. UPD and PHIVOLCS are still
+         placeholders — add their files there and swap them in like DOST/NIGS.
          ============================================================ -->
     <footer class="site-footer">
-        <div class="site-footer-inner">
-            <div class="footer-left">
-                <div class="footer-org">SeiScanPH</div>
-                <p>[Address]</p>
-                <p>[Contact]</p>
-                <p>[Email]</p>
+        <div class="footer-grid">
+            <div class="footer-about">
+                <a href="index.html" class="brand" aria-label="SeiScanPH home">
+                    <img src="images/logo.png" alt="" class="logo-img">
+                    <span class="brand-text">
+                        <span class="brand-name">SeiScanPH</span>
+                        <span class="brand-sub">Seismic Hazard · PH</span>
+                    </span>
+                </a>
+                <p class="footer-desc">Open, science-based earthquake hazard mapping for the Philippines.</p>
             </div>
-            <div class="footer-right">
-                <div class="footer-partners-label">In partnership with</div>
-                <div class="partner-logos">
-                    <div class="partner-logo">DOST</div>
+            <div>
+                <h2 class="footer-heading">Contact</h2>
+                <address class="footer-contact">
+                    <span>[Research Center]</span>
+                    <span>[Building, Street]</span>
+                    <span>[City, Philippines]</span>
+                    <span>[+63 ...]</span>
+                    <span>[email]</span>
+                </address>
+            </div>
+            <div>
+                <h2 class="footer-heading">Partners</h2>
+                <div class="partner-grid">
+                    <div class="partner-logo partner-logo--img">
+                        <img src="images/partners/dost.webp" alt="Department of Science and Technology (DOST)" loading="lazy">
+                    </div>
                     <div class="partner-logo">UPD</div>
-                    <div class="partner-logo">NIGS</div>
+                    <div class="partner-logo partner-logo--img">
+                        <img src="images/partners/nigs.png" alt="National Institute of Geological Sciences, UP Diliman (NIGS)" loading="lazy">
+                    </div>
                     <div class="partner-logo">PHIVOLCS</div>
                 </div>
             </div>
         </div>
+        <div class="footer-bottom">
+            <div class="footer-bottom-inner">© 2026 SeiScanPH</div>
+        </div>
     </footer>
 
+    <script src="js/landing.js" defer></script>
 </body>
 </html>
