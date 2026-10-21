@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us — SeiScanPH</title>
-    <meta name="description" content="About SeiScanPH — an earthquake hazard mapping platform for the Philippines.">
+    <meta name="description" content="About SeiScanPH — a DOST-funded research project mapping active and previously unmapped faults in the Batangas–Mindoro–Marinduque region.">
 
     <!-- Fonts: Archivo (headings/nav/buttons), Public Sans (body), JetBrains Mono (labels) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,8 @@
 
     <!-- Shared site styles (does NOT load the map's style.css, so no collisions) -->
     <link rel="stylesheet" href="css/landing.css">
+    <!-- About-page styles (loaded after the shared styles) -->
+    <link rel="stylesheet" href="css/about.css">
 </head>
 <body>
 
@@ -39,19 +41,226 @@
         </div>
     </header>
 
-    <!-- PAGE HEADER -->
-    <section class="page-header">
-        <div class="container">
-            <h1>About Us</h1>
-            <p>Who we are and what SeiScanPH is for.</p>
-        </div>
-    </section>
+    <main>
 
-    <!-- PAGE BODY -->
-    <main class="page-body">
-        <div class="container">
-            <div class="coming-soon">Content coming soon.</div>
-        </div>
+        <!-- 1. INTRO (cream) -->
+        <section class="about-intro">
+            <div class="container about-intro-grid">
+                <div>
+                    <p class="eyebrow">About Us</p>
+                    <h1>Finding the faults we haven't mapped yet.</h1>
+                    <p class="lead">
+                        A DOST-funded research project mapping active and previously unmapped faults in the
+                        Batangas–Mindoro–Marinduque region and nearby offshore areas.
+                    </p>
+                </div>
+                <figure class="about-intro-photo">
+                    <img src="images/gallery/group.jpg" alt="Students and researchers posing with survey equipment under a large tree" loading="lazy">
+                </figure>
+            </div>
+        </section>
+
+        <!-- 2. THE PROJECT (white) -->
+        <section class="section section-white" id="project">
+            <div class="container project-grid">
+                <div>
+                    <p class="eyebrow">The Project</p>
+                    <h2>What SeiScanPH studies.</h2>
+                    <p class="lead">
+                        SeiScanPH is a DOST-funded research project under the ‘Paleoseismology and Hazard
+                        Assessment of Seismogenic Sources in Northern Luzon, Philippines’ program and the
+                        MECO–TECO Joint Research Project initiative. The project focuses on mapping and
+                        characterizing active and previously unmapped faults in the Batangas–Mindoro–Marinduque
+                        region and adjacent offshore areas, including the Verde Passage Fault, Sibuyan Sea Fault,
+                        and related fault structures, using seismic imaging and integrated geophysical datasets.
+                    </p>
+                </div>
+
+                <aside class="feature-card">
+                    <h3>At a glance</h3>
+                    <dl class="glance-list">
+                        <div>
+                            <dt>Funding</dt>
+                            <dd>Department of Science and Technology (DOST)</dd>
+                        </div>
+                        <div>
+                            <dt>Initiative</dt>
+                            <dd>MECO–TECO Joint Research Project</dd>
+                        </div>
+                        <div>
+                            <dt>Study area</dt>
+                            <dd>Batangas–Mindoro–Marinduque region and adjacent offshore areas</dd>
+                        </div>
+                        <div>
+                            <dt>Focus faults</dt>
+                            <dd>Verde Passage Fault, Sibuyan Sea Fault, and related fault structures</dd>
+                        </div>
+                        <div>
+                            <dt>Methods</dt>
+                            <dd>Seismic imaging and integrated geophysical datasets</dd>
+                        </div>
+                    </dl>
+                </aside>
+            </div>
+        </section>
+
+        <!-- 3. OBJECTIVES (cream) -->
+        <section class="section section-cream" id="objectives">
+            <div class="container">
+                <p class="eyebrow">Objectives</p>
+                <h2>What the project sets out to do.</h2>
+                <ol class="objective-grid">
+                    <li class="objective-card">
+                        <span class="objective-num">01</span>
+                        <h3>Find unmapped faults</h3>
+                        <p>Find and map active faults that have not yet been identified.</p>
+                    </li>
+                    <li class="objective-card">
+                        <span class="objective-num">02</span>
+                        <h3>Locate the faults</h3>
+                        <p>Use seismic imaging and other geophysical data to better understand where faults such as the Verde Passage Fault and Sibuyan Sea Fault are located.</p>
+                    </li>
+                    <li class="objective-card">
+                        <span class="objective-num">03</span>
+                        <h3>Understand the hazard</h3>
+                        <p>Understand how these faults may contribute to earthquake and marine hazards.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- 4. SDGs (white) — icons unaltered per UN guidelines (see css/about.css) -->
+        <section class="section section-white" id="sdgs">
+            <div class="container">
+                <p class="eyebrow">Sustainable Development Goals</p>
+                <h2>Aligned with the UN SDGs.</h2>
+                <ul class="sdg-row">
+                    <li><img src="images/sdg/sdg-04.jpg" alt="SDG 4: Quality Education" width="400" height="400" loading="lazy"></li>
+                    <li><img src="images/sdg/sdg-11.jpg" alt="SDG 11: Sustainable Cities and Communities" width="400" height="400" loading="lazy"></li>
+                    <li><img src="images/sdg/sdg-14.jpg" alt="SDG 14: Life Below Water" width="400" height="400" loading="lazy"></li>
+                    <li><img src="images/sdg/sdg-15.jpg" alt="SDG 15: Life on Land" width="400" height="400" loading="lazy"></li>
+                    <li><img src="images/sdg/sdg-17.jpg" alt="SDG 17: Partnerships for the Goals" width="400" height="400" loading="lazy"></li>
+                </ul>
+                <p class="sdg-note">
+                    SDG icons are used in line with the
+                    <a href="https://www.un.org/sustainabledevelopment/news/communications-material/" target="_blank" rel="noopener">UN guidelines for the use of the SDG logo and icons</a>.
+                    Their use does not imply UN endorsement.
+                </p>
+            </div>
+        </section>
+
+        <!-- 5. TEAM (cream) — photo filenames contain spaces/commas, so paths are URL-encoded -->
+        <section class="section section-cream" id="team">
+            <div class="container">
+                <p class="eyebrow">Our Team</p>
+                <h2>The people behind SeiScanPH.</h2>
+
+                <div class="leader-card">
+                    <img src="images/members/Leo%20T.%20Armada%2C%20Ph.D..jpg" alt="Portrait of Leo T. Armada, Ph.D." class="member-photo" width="480" height="480" loading="lazy">
+                    <div>
+                        <h3 class="leader-name">Leo T. Armada, Ph.D.</h3>
+                        <p class="leader-role">Project Leader</p>
+                    </div>
+                </div>
+
+                <ul class="member-grid">
+                    <li class="member-card">
+                        <img src="images/members/Marc%20Andrew%20P.%20Alvior.jpg" alt="Portrait of Marc Andrew P. Alvior" class="member-photo" width="480" height="480" loading="lazy">
+                        <h3 class="member-name">Marc Andrew P. Alvior</h3>
+                    </li>
+                    <li class="member-card">
+                        <img src="images/members/Maui%20C.%20Apundar.jpg" alt="Portrait of Maui C. Apundar" class="member-photo" width="480" height="480" loading="lazy">
+                        <h3 class="member-name">Maui C. Apundar</h3>
+                    </li>
+                    <li class="member-card">
+                        <img src="images/members/Joshua%20Godwin%20Cuevas%2C%20MSc.jpg" alt="Portrait of Joshua Godwin Cuevas, MSc" class="member-photo" width="480" height="480" loading="lazy">
+                        <h3 class="member-name">Joshua Godwin Cuevas, MSc</h3>
+                    </li>
+                    <li class="member-card">
+                        <img src="images/members/Denise%20L.%20Salazar.jpg" alt="Portrait of Denise L. Salazar" class="member-photo" width="480" height="480" loading="lazy">
+                        <h3 class="member-name">Denise L. Salazar</h3>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 6. PARTNERS (white) -->
+        <section class="section section-white" id="partners">
+            <div class="container">
+                <p class="eyebrow">Partners</p>
+                <h2>Working together.</h2>
+
+                <div class="partner-group">
+                    <h3 class="partner-group-title">Core partners</h3>
+                    <ul class="partner-tiles">
+                        <li class="partner-tile">
+                            <img src="images/partners/dost.webp" alt="DOST logo" loading="lazy">
+                            <span class="partner-tile-name">Department of Science and Technology (DOST)</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/upd.jpg" alt="UP Diliman logo" loading="lazy">
+                            <span class="partner-tile-name">University of the Philippines Diliman</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/nigs.png" alt="UP NIGS logo" loading="lazy">
+                            <span class="partner-tile-name">UP National Institute of Geological Sciences (NIGS)</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/phivolcs.jpg" alt="DOST-PHIVOLCS logo" loading="lazy">
+                            <span class="partner-tile-name">DOST-PHIVOLCS</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="partner-group">
+                    <h3 class="partner-group-title">Government agencies</h3>
+                    <ul class="partner-tiles">
+                        <li class="partner-tile">
+                            <img src="images/partners/doe.jpg" alt="Department of Energy logo" loading="lazy">
+                            <span class="partner-tile-name">Department of Energy (DOE)</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/mgb-denr.jpg" alt="Mines and Geosciences Bureau logo" loading="lazy">
+                            <span class="partner-tile-name">Mines and Geosciences Bureau (MGB–DENR)</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/namria.jpg" alt="NAMRIA logo" loading="lazy">
+                            <span class="partner-tile-name">National Mapping and Resource Information Authority (NAMRIA)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="partner-group">
+                    <h3 class="partner-group-title">Academic partners</h3>
+                    <ul class="partner-tiles">
+                        <li class="partner-tile">
+                            <img src="images/partners/ncu.jpg" alt="National Central University logo" loading="lazy">
+                            <span class="partner-tile-name">National Central University, Taiwan (NCU)</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/marsu.jpg" alt="Marinduque State University logo" loading="lazy">
+                            <span class="partner-tile-name">Marinduque State University (MarSU)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="partner-group">
+                    <h3 class="partner-group-title">Local government</h3>
+                    <p class="partner-group-note">PDRRMO: Provincial Disaster Risk Reduction and Management Office</p>
+                    <ul class="partner-tiles">
+                        <li class="partner-tile">
+                            <img src="images/partners/batangas-pdrrmo.jpg" alt="Batangas PDRRMO logo" loading="lazy">
+                            <span class="partner-tile-name">Batangas PDRRMO</span>
+                        </li>
+                        <li class="partner-tile">
+                            <img src="images/partners/marinduque-pdrrmo.jpg" alt="Marinduque PDRRMO logo" loading="lazy">
+                            <span class="partner-tile-name">Marinduque PDRRMO</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- ============================================================
