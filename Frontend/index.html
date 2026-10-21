@@ -118,15 +118,33 @@
                 </div>
             </div>
 
-            <!-- Placeholder tiles — swap each for an <img> later.
+            <!-- Photos live in images/gallery/.
                  The ‹ › buttons are wired in js/landing.js; the row also scrolls by swipe/trackpad. -->
             <div class="gallery-track" id="gallery-track" role="region" aria-label="Gallery photos" tabindex="0">
-                <div class="gallery-item">Image</div>
-                <div class="gallery-item">Image</div>
-                <div class="gallery-item">Image</div>
-                <div class="gallery-item">Image</div>
-                <div class="gallery-item">Image</div>
-                <div class="gallery-item">Image</div>
+                <figure class="gallery-item">
+                    <img src="images/gallery/fieldwork.jpg" alt="Two team members hauling a geophysical antenna along a road during fieldwork" loading="lazy">
+                    <figcaption class="gallery-caption">Fieldwork</figcaption>
+                </figure>
+                <figure class="gallery-item">
+                    <img src="images/gallery/group.jpg" alt="Students and researchers posing with survey equipment under a large tree" loading="lazy">
+                    <figcaption class="gallery-caption">Group picture</figcaption>
+                </figure>
+                <figure class="gallery-item">
+                    <img src="images/gallery/conference.jpg" alt="Four team members in front of the SeiScanPH ground penetrating radar seminar screen" loading="lazy">
+                    <figcaption class="gallery-caption">Conference</figcaption>
+                </figure>
+                <figure class="gallery-item">
+                    <img src="images/gallery/workshop.jpg" alt="Workshop participants kneeling around a printed radar profile, discussing the results" loading="lazy">
+                    <figcaption class="gallery-caption">Workshop</figcaption>
+                </figure>
+                <figure class="gallery-item">
+                    <img src="images/gallery/survey.jpg" alt="Team conducting a geophysical survey in the field with cable reels and instruments" loading="lazy">
+                    <figcaption class="gallery-caption">Ground survey</figcaption>
+                </figure>
+                <figure class="gallery-item">
+                    <img src="images/gallery/seafloor.jpg" alt="Outrigger boat in shallow coastal water, ready for offshore work" loading="lazy">
+                    <figcaption class="gallery-caption">Offshore survey</figcaption>
+                </figure>
             </div>
 
             <div class="section-link">
@@ -159,8 +177,7 @@
 
     <!-- ============================================================
          SHARED FOOTER — keep identical across index/about/gallery/resources
-         Partner logos live in images/partners/. UPD and PHIVOLCS are still
-         placeholders — add their files there and swap them in like DOST/NIGS.
+         Partner logos live in images/partners/ (white tiles, object-fit: contain).
          ============================================================ -->
     <footer class="site-footer">
         <div class="footer-grid">
@@ -190,11 +207,15 @@
                     <div class="partner-logo partner-logo--img">
                         <img src="images/partners/dost.webp" alt="Department of Science and Technology (DOST)" loading="lazy">
                     </div>
-                    <div class="partner-logo">UPD</div>
+                    <div class="partner-logo partner-logo--img">
+                        <img src="images/partners/upd.jpg" alt="University of the Philippines Diliman" loading="lazy">
+                    </div>
                     <div class="partner-logo partner-logo--img">
                         <img src="images/partners/nigs.png" alt="National Institute of Geological Sciences, UP Diliman (NIGS)" loading="lazy">
                     </div>
-                    <div class="partner-logo">PHIVOLCS</div>
+                    <div class="partner-logo partner-logo--img">
+                        <img src="images/partners/phivolcs.jpg" alt="DOST-PHIVOLCS" loading="lazy">
+                    </div>
                 </div>
             </div>
         </div>
