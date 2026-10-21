@@ -608,8 +608,8 @@ button:focus-visible,
     margin: 0 auto;
     padding: 64px 24px 48px;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
-    gap: 48px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);  /* brand · contact · location · partners */
+    gap: 40px;
 }
 
 .footer-desc {
@@ -634,10 +634,25 @@ button:focus-visible,
     font-style: normal;
     font-size: 0.95rem;
     line-height: 1.85;
+    overflow-wrap: anywhere;   /* long emails can't overflow narrow columns */
 }
 
-.footer-contact span {
+.footer-contact span,
+.footer-contact a {
     display: block;
+}
+
+.footer-contact a {
+    width: fit-content;
+    color: var(--nav-link);
+    text-underline-offset: 3px;
+    transition: color 0.15s ease;
+}
+
+.footer-contact a:hover,
+.footer-contact a:focus-visible {
+    color: #fff;
+    text-decoration: underline;
 }
 
 .partner-grid {
