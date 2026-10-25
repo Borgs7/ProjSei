@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery — SeiScanPH</title>
-    <meta name="description" content="Gallery of SeiScanPH maps, scenarios, and outputs.">
+    <meta name="description" content="Photos from SeiScanPH fieldwork, surveys, and workshops across the Batangas–Mindoro–Marinduque region.">
 
     <!-- Fonts: Archivo (headings/nav/buttons), Public Sans (body), JetBrains Mono (labels) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,8 @@
 
     <!-- Shared site styles (does NOT load the map's style.css, so no collisions) -->
     <link rel="stylesheet" href="css/landing.css">
+    <!-- Gallery-page styles (loaded after the shared styles) -->
+    <link rel="stylesheet" href="css/gallery.css">
 </head>
 <body>
 
@@ -39,20 +41,41 @@
         </div>
     </header>
 
-    <!-- PAGE HEADER -->
-    <section class="page-header">
-        <div class="container">
-            <h1>Gallery</h1>
-            <p>Maps, scenarios, and outputs from SeiScanPH.</p>
-        </div>
-    </section>
+    <main>
 
-    <!-- PAGE BODY -->
-    <main class="page-body">
-        <div class="container">
-            <div class="coming-soon">Content coming soon.</div>
+        <!-- INTRO (cream) -->
+        <section class="gallery-intro">
+            <div class="container">
+                <p class="eyebrow">Gallery</p>
+                <h1>In the field.</h1>
+                <p class="lead">Fieldwork, surveys, and workshops from across the study area.</p>
+            </div>
+        </section>
+
+        <!-- TRIPS — built by js/gallery.js from js/gallery-data.js (edit that file to add trips/photos) -->
+        <div id="trips">
+            <noscript>
+                <div class="container trip">
+                    <div class="coming-soon">The photo gallery needs JavaScript to display.</div>
+                </div>
+            </noscript>
         </div>
+
     </main>
+
+    <!-- LIGHTBOX — opened by js/gallery.js when a thumbnail is clicked -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
+        <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close photo viewer">✕</button>
+        <div class="lightbox-stage" id="lightbox-stage">
+            <button type="button" class="lightbox-nav" id="lightbox-prev" aria-label="Previous photo">‹</button>
+            <img class="lightbox-img" id="lightbox-img" alt="">
+            <button type="button" class="lightbox-nav" id="lightbox-next" aria-label="Next photo">›</button>
+        </div>
+        <p class="lightbox-caption" aria-live="polite">
+            <span id="lightbox-title"></span>
+            <span class="lightbox-counter" id="lightbox-counter"></span>
+        </p>
+    </div>
 
     <!-- ============================================================
          SHARED FOOTER — keep identical across index/about/gallery/resources
@@ -110,5 +133,8 @@
         </div>
     </footer>
 
+    <!-- Gallery: trip data first, then the page logic -->
+    <script src="js/gallery-data.js" defer></script>
+    <script src="js/gallery.js" defer></script>
 </body>
 </html>

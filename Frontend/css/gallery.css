@@ -1,0 +1,243 @@
+/* ============================================
+   SEISCANPH - Gallery page (gallery.html only)
+   Loaded AFTER css/landing.css: reuses its colour tokens, fonts
+   and the shared .section / .eyebrow / .lead / .coming-soon styles.
+   Trip sections are built by js/gallery.js from js/gallery-data.js.
+   ============================================ */
+
+/* ============================================
+   INTRO  (cream band)
+   ============================================ */
+.gallery-intro {
+    padding: 72px 0 56px;
+    background: linear-gradient(180deg, var(--cream) 0%, var(--cream-2) 100%);
+    border-bottom: 1px solid var(--line);
+}
+
+.gallery-intro h1 {
+    font-weight: 900;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+}
+
+.gallery-intro .lead {
+    margin-top: 14px;
+}
+
+/* ============================================
+   TRIP SECTIONS
+   ============================================ */
+.trip {
+    padding: 64px 0;
+}
+
+.trip-head {
+    margin-bottom: 28px;
+}
+
+.trip .trip-title {
+    margin-bottom: 6px;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+}
+
+.trip-dates {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+}
+
+.trip-desc {
+    max-width: 680px;
+    margin-top: 10px;
+    color: var(--ink-soft);
+}
+
+.trip-count {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: var(--slate);
+}
+
+/* Same-size thumbnails; portrait photos are cropped to fit (the lightbox shows them in full) */
+.trip-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.trip-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--cream);   /* shows only while a photo is loading */
+    cursor: zoom-in;
+}
+
+.trip-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+}
+
+.trip-thumb:hover img {
+    transform: scale(1.04);
+}
+
+.trip-empty {
+    padding: 48px 24px;
+}
+
+/* ============================================
+   LIGHTBOX
+   ============================================ */
+html.lightbox-open {
+    overflow: hidden;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 64px 16px 24px;
+    background: rgba(0, 12, 34, 0.94);
+}
+
+/* display:flex above would otherwise override the hidden attribute */
+.lightbox[hidden],
+.lightbox [hidden] {
+    display: none;
+}
+
+.lightbox-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 0;
+}
+
+.lightbox-img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(1200px, calc(100vw - 180px));
+    max-height: calc(100vh - 160px);
+    object-fit: contain;   /* full photo, portrait or landscape, never cropped */
+    border-radius: 6px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-nav,
+.lightbox-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    padding-bottom: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.lightbox-nav:hover,
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.lightbox button:focus-visible {
+    outline-color: var(--gold);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding-bottom: 0;
+    font-size: 20px;
+}
+
+.lightbox-caption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px 14px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #D5DCEC;
+}
+
+.lightbox-counter {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+/* Phones: photo on top, arrows underneath so they don't cover it */
+@media (max-width: 640px) {
+    .gallery-intro {
+        padding: 52px 0 40px;
+    }
+    .trip {
+        padding: 48px 0;
+    }
+    .lightbox {
+        padding: 64px 12px 20px;
+    }
+    .lightbox-stage {
+        flex-wrap: wrap;
+    }
+    .lightbox-img {
+        order: -1;
+        flex: 0 0 100%;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 220px);
+        border-radius: 0;
+        box-shadow: none;   /* the box is wider than a portrait photo here */
+    }
+}
+
+@media (max-width: 520px) {
+    .trip-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .trip-thumb img {
+        transition: none;
+    }
+}
