@@ -29,9 +29,13 @@
 
     const COLOR = '#7b3fa0';   // purple — deliberately distinct from PHIVOLCS red/orange
 
-    function styleFor() {
-        // Uniform styling: the source data has no classification to vary on.
-        return { color: COLOR, weight: 2, opacity: 0.85 };
+    // Per-layer look, so two datasets (e.g. research faults vs Bacud 1997) can differ:
+    //   ResearchFaults.fromStatic(url, { style: { color, dashArray, title } })
+    const DEFAULT_STYLE = { color: COLOR, dashArray: null, title: 'Research fault trace' };
+
+    function lineStyle(s) {
+        // Uniform styling within a layer: the source data has no classification to vary on.
+        return { color: s.color, weight: 2, opacity: 0.85, dashArray: s.dashArray };
     }
 
     function formatLength(m) {
@@ -39,14 +43,14 @@
         return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(2)} km`;
     }
 
-    function popupHtml(p) {
+    function popupHtml(p, s) {
         const row = (label, value) => value
             ? `<tr><td style="padding:2px 8px 2px 0;color:#666">${label}</td><td>${value}</td></tr>`
             : '';
         return `
             <div style="font-family:system-ui,sans-serif;font-size:13px;min-width:230px">
-              <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:${COLOR}">
-                Research fault trace
+              <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:${s.color}">
+                ${s.title}
               </div>
               <div style="color:#888;font-size:11px;margin-bottom:6px">
                 Not part of the PHIVOLCS official catalog
@@ -61,28 +65,29 @@
         `;
     }
 
-    function buildLayer(geojson, map) {
+    function buildLayer(geojson, styleOpts) {
+        const s = Object.assign({}, DEFAULT_STYLE, styleOpts);
         return L.geoJSON(geojson, {
-            style: styleFor,
+            style: () => lineStyle(s),
             onEachFeature: (feature, layer) => {
                 const p = feature.properties || {};
-                layer.bindPopup(popupHtml(p));
+                layer.bindPopup(popupHtml(p, s));
                 layer.bindTooltip(p.source || 'Research fault',
                                   { sticky: true, direction: 'top' });
                 layer.on('mouseover', () => {
                     layer.setStyle({ weight: 4 });
                     layer.bringToFront();
                 });
-                layer.on('mouseout', () => layer.setStyle(styleFor()));
+                layer.on('mouseout', () => layer.setStyle(lineStyle(s)));
             },
         });
     }
 
     const ResearchFaults = {
-        async fromStatic(url) {
+        async fromStatic(url, opts = {}) {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
-            return buildLayer(await res.json());
+            return buildLayer(await res.json(), opts.style);
         },
 
         async fromApi(baseUrl, opts = {}) {
@@ -91,7 +96,7 @@
             if (opts.bbox)   url.searchParams.set('bbox', opts.bbox);
             const res = await fetch(url);
             if (!res.ok) throw new Error(`Failed to load research faults: ${res.status}`);
-            return buildLayer(await res.json());
+            return buildLayer(await res.json(), opts.style);
         },
 
         legend() {

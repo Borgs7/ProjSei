@@ -1,24 +1,43 @@
-// Initialize the map
-// Centered on Calapan area with appropriate zoom level
-const map = L.map('map').setView([13.4251, 121.0220], 9);
+// ============================================
+// SEISCANPH - HAZARD MAP SETUP (map.html)
+// Creates the map, base maps and data layers. Each data layer registers
+// with the side panel (js/layer-panel.js) the moment it finishes loading,
+// or is marked "Unavailable" if it fails — so slow layers never go missing.
+// ============================================
+
+// Study area / initial view (Calapan scenario). Also used by "Reset view".
+const STUDY_VIEW = { center: [13.4251, 121.0220], zoom: 9 };
+
+const map = L.map('map', { zoomControl: false })   // zoom buttons are custom (js/map-ui.js)
+    .setView(STUDY_VIEW.center, STUDY_VIEW.zoom);
+L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
 NearestFault.init(map, 'http://localhost:8000');
+ResultsCard.init(map);
+LayerPanel.init(map);
 
-// Add Stamen Terrain basemap
-const terrainLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png', {
-    attribution: '© Stamen Design, © OpenStreetMap contributors',
-    maxZoom: 18
-});
+// ============================================
+// BASE MAPS — all keyless (work on GitHub Pages), with required attribution
+// ============================================
+const baseLayers = {
+    light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }),
+    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+        subdomains: 'abc',
+        maxZoom: 17
+    }),
+    streets: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    })
+};
+LayerPanel.setBasemaps(baseLayers, 'light');
 
-// Add OpenStreetMap basemap
-const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-});
-
-// Add terrain layer to map by default
-terrainLayer.addTo(map);
-
-// LAYER REFERENCES (for layer control)
+// LAYER REFERENCES (kept as globals; each is registered with the panel once loaded)
 let pgaRasterLayer = null;
 let contoursLayer = null;
 let phBoundaryLayer = null;
@@ -28,7 +47,7 @@ let gebcoLayer = null;
 let researchFaultsLayer = null;
 let bacudLayer = null;
 
-// LOAD PHILIPPINES BOUNDARY (GeoJSON)
+// LOAD PHILIPPINES BOUNDARY (GeoJSON) — on by default
 fetch('data/ph_boundary.geojson')
     .then(response => {
         if (!response.ok) {
@@ -43,15 +62,18 @@ fetch('data/ph_boundary.geojson')
                 color: '#333',
                 weight: 2,
                 opacity: 0.6
-            }
+            },
+            interactive: false
         }).addTo(map);
+        LayerPanel.register('boundary', phBoundaryLayer);
         console.log('✓ Philippines boundary loaded');
     })
     .catch(error => {
         console.warn('Philippines boundary not loaded:', error.message);
+        LayerPanel.fail('boundary', error.message);
     });
 
-// LOAD CONTOURS (GeoJSON)
+// LOAD CONTOURS (GeoJSON) — off by default
 fetch('data/contours.geojson')
     .then(response => {
         if (!response.ok) {
@@ -68,27 +90,47 @@ fetch('data/contours.geojson')
             },
             onEachFeature: function(feature, layer) {
                 // Check different possible property names for PGA value
-                const pgaValue = feature.properties.pga || 
-                               feature.properties.PGA || 
+                const pgaValue = feature.properties.pga ||
+                               feature.properties.PGA ||
                                feature.properties.ELEV ||
                                feature.properties.value;
-                
+
                 if (pgaValue) {
                     layer.bindPopup(`
-                        <strong>PGA Contour</strong><br>
-                        Value: ${pgaValue} cm/s²
+                        <div class="map-popup"><h3>PGA contour</h3><p>Value: ${pgaValue} cm/s²</p></div>
                     `);
                 }
             }
         });
-
+        LayerPanel.register('contours', contoursLayer);
         console.log('✓ Contours loaded');
     })
     .catch(error => {
         console.warn('Contours not loaded:', error.message);
+        LayerPanel.fail('contours', error.message);
     });
 
-// LOAD EPICENTER (GeoJSON)
+// LOAD EPICENTER (GeoJSON) — on by default
+const EPICENTER_POPUP = `
+    <div class="map-popup">
+        <h3>M 7.1 Earthquake</h3>
+        <p><strong>Location:</strong> Calapan, Mindoro</p>
+        <p><strong>Coordinates:</strong> 13.4251°N, 121.0220°E</p>
+    </div>
+`;
+
+function epicenterMarker(latlng) {
+    return L.marker(latlng, {
+        icon: L.divIcon({
+            className: 'epicenter-marker',
+            html: '<svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="#B4111A" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        }),
+        alt: 'Epicenter'
+    });
+}
+
 fetch('data/epicenter.geojson')
     .then(response => {
         if (!response.ok) {
@@ -98,102 +140,79 @@ fetch('data/epicenter.geojson')
     })
     .then(data => {
         epicenterLayer = L.geoJSON(data, {
-            pointToMarker: function(feature, latlng) {
-                return L.marker(latlng, {
-                    icon: L.divIcon({
-                        className: 'epicenter-marker',
-                        html: '<div style="font-size: 24px;">⭐</div>',
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
-                    })
-                });
-            },
-            onEachFeature: function(feature, layer) {
-                layer.bindPopup(`
-                    <div style="text-align: center;">
-                        <h3 style="color: #d73027; margin-bottom: 5px;">⭐ M 7.1 Earthquake</h3>
-                        <p style="margin: 5px 0;"><strong>Location:</strong> Calapan, Mindoro</p>
-                        <p style="margin: 5px 0;"><strong>Coordinates:</strong> 13.4251°N, 121.0220°E</p>
-                    </div>
-                `);
-            }
+            pointToLayer: (feature, latlng) => epicenterMarker(latlng),   // was "pointToMarker" (not a Leaflet option), so the star never showed
+            onEachFeature: (feature, layer) => layer.bindPopup(EPICENTER_POPUP)
         }).addTo(map);
-        
+        LayerPanel.register('epicenter', epicenterLayer);
         console.log('✓ Epicenter loaded');
     })
     .catch(error => {
         console.warn('Epicenter not loaded:', error.message);
-        
-        // Fallback: Create manual epicenter if file not found
-        epicenterLayer = L.marker([13.4251, 121.0220], {
-            icon: L.divIcon({
-                className: 'epicenter-marker',
-                html: '<div style="font-size: 24px;">⭐</div>',
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            })
-        }).addTo(map);
-        
-        epicenterLayer.bindPopup(`
-            <div style="text-align: center;">
-                <h3 style="color: #d73027; margin-bottom: 5px;">⭐ M 7.1 Earthquake</h3>
-                <p style="margin: 5px 0;"><strong>Location:</strong> Calapan, Mindoro</p>
-                <p style="margin: 5px 0;"><strong>Coordinates:</strong> 13.4251°N, 121.0220°E</p>
-            </div>
-        `);
+
+        // Fallback: create the epicenter marker manually if the file isn't found
+        epicenterLayer = epicenterMarker(STUDY_VIEW.center).bindPopup(EPICENTER_POPUP).addTo(map);
+        LayerPanel.register('epicenter', epicenterLayer);
     });
 
-// LOAD ACTIVE FAULTS (GeoJSON via ActiveFaults helper)
+// LOAD ACTIVE FAULTS (GeoJSON via ActiveFaults helper) — on by default
 ActiveFaults.fromStatic('data/active_faults_calapan.geojson')
     .then(layer => {
         faultsLayer = layer;
         faultsLayer.addTo(map);
+        LayerPanel.register('faults', faultsLayer);
+        NearestFault.useLayer(faultsLayer);   // offline nearest-fault estimate
         console.log('✓ Active faults loaded');
     })
     .catch(error => {
         console.warn('Active faults not loaded:', error.message);
+        LayerPanel.fail('faults', error.message);
     });
 
-// LOAD RESEARCH FAULTS (static GeoJSON — purple, distinct from PHIVOLCS)
-ResearchFaults.fromStatic('data/research_faults.geojson')
+// LOAD RESEARCH FAULTS (static GeoJSON — purple, distinct from PHIVOLCS) — off by default
+ResearchFaults.fromStatic('data/research_faults.geojson', {
+    style: { color: '#7b3fbf', dashArray: '6,4', title: 'Research fault trace' }
+})
     .then(layer => {
         researchFaultsLayer = layer;
+        LayerPanel.register('research', researchFaultsLayer);
         console.log('✓ Research faults loaded');
     })
     .catch(error => {
         console.warn('Research faults not loaded:', error.message);
+        LayerPanel.fail('research', error.message);
     });
 
-// LOAD BACUD 1997 TECTONIC MAP (static GeoJSON — Sibuyan Sea, mostly offshore)
-ResearchFaults.fromStatic('data/bacud_tectonic.geojson')
+// LOAD BACUD 1997 TECTONIC MAP (Sibuyan Sea, mostly offshore) — off by default
+ResearchFaults.fromStatic('data/bacud_tectonic.geojson', {
+    style: { color: '#9c6ad6', dashArray: '1,5', title: 'Bacud (1997) tectonic map' }
+})
     .then(layer => {
         bacudLayer = layer;
+        LayerPanel.register('bacud', bacudLayer);
         console.log('✓ Bacud tectonic map loaded');
     })
     .catch(error => {
         console.warn('Bacud tectonic map not loaded:', error.message);
+        LayerPanel.fail('bacud', error.message);
     });
 
-// LOAD GEBCO BATHYMETRY/TERRAIN (GeoTIFF)
+// LOAD GEBCO BATHYMETRY/TERRAIN (GeoTIFF) — on by default
 GebcoTerrain.load('data/gebco_calapan.tif')
     .then(layer => {
         gebcoLayer = layer;
         gebcoLayer.addTo(map);
+        LayerPanel.register('gebco', gebcoLayer);
         console.log('✓ GEBCO terrain loaded');
     })
     .catch(error => {
         console.warn('GEBCO terrain not loaded:', error.message);
+        LayerPanel.fail('gebco', error.message);
     });
 
 // ============================================
-// LOAD PGA RASTER (GeoTIFF)
-// Note: This requires georaster and georaster-layer-for-leaflet libraries
-// Add these to your HTML before map.js:
-// <script src="https://unpkg.com/georaster"></script>
-// <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+// LOAD PGA RASTER (GeoTIFF) — "Shaking intensity", off by default
+// Needs the georaster + georaster-layer-for-leaflet scripts (loaded in map.html).
 // ============================================
-
-// Check if georaster libraries are loaded
 if (typeof parseGeoraster !== 'undefined' && typeof GeoRasterLayer !== 'undefined') {
     fetch('data/pgamasked.tif')
         .then(response => {
@@ -202,120 +221,37 @@ if (typeof parseGeoraster !== 'undefined' && typeof GeoRasterLayer !== 'undefine
             }
             return response.arrayBuffer();
         })
-        .then(arrayBuffer => {
-            parseGeoraster(arrayBuffer).then(georaster => {
-                console.log('Georaster info:', georaster);
-                
-                pgaRasterLayer = new GeoRasterLayer({
-                    georaster: georaster,
-                    opacity: 0.7,
-                    pixelValuesToColorFn: values => {
-                        const pga = values[0];
-                        
-                        // Handle no data
-                        if (pga === null || pga === undefined || pga === 0) {
-                            return null; // Transparent
-                        }
-                        
-                        // Color scale based on PGA values (cm/s²)
-                        if (pga > 200) return 'rgba(103, 0, 31, 0.8)';    // Dark red (Extreme)
-                        if (pga > 150) return 'rgba(178, 24, 43, 0.8)';   // Red (Very High)
-                        if (pga > 100) return 'rgba(214, 96, 77, 0.8)';   // Orange-red (High)
-                        if (pga > 75) return 'rgba(244, 165, 130, 0.8)';  // Orange (Moderate-High)
-                        if (pga > 50) return 'rgba(253, 219, 199, 0.7)';  // Light orange (Moderate)
-                        if (pga > 25) return 'rgba(209, 229, 240, 0.7)';  // Light blue (Low)
-                        if (pga > 10) return 'rgba(146, 197, 222, 0.7)';  // Blue (Very Low)
-                        return 'rgba(67, 147, 195, 0.6)';                  // Dark blue (Minimal)
-                    },
-                    resolution: 256
-                });
-                
-                console.log('✓ PGA raster loaded');
-                
-                // Update info panel
-                document.getElementById('map-info').innerHTML = `
-                    <p style="color: #4CAF50; font-weight: bold;">✓ PGA data loaded successfully</p>
-                    <p style="font-size: 12px; margin-top: 5px;">Click anywhere to query PGA values</p>
-                `;
+        .then(arrayBuffer => parseGeoraster(arrayBuffer))
+        .then(georaster => {
+            const noData = georaster.noDataValue;
+            pgaRasterLayer = new GeoRasterLayer({
+                georaster: georaster,
+                opacity: 0.7,
+                pixelValuesToColorFn: values => {
+                    const pga = values[0];
+
+                    // Handle no data
+                    if (pga === null || pga === undefined || pga === 0 || pga === noData || isNaN(pga)) {
+                        return null; // Transparent
+                    }
+
+                    // Colour by MMI, using the SAME PGA → MMI conversion (Wald et al. 1999)
+                    // and MMI colours as the click result (pgaToMMI / getIntensityDescription
+                    // in click-calculator.js — loaded before any tile is drawn).
+                    return getIntensityDescription(pgaToMMI(pga)).color;
+                },
+                resolution: 256
             });
+            LayerPanel.register('pga', pgaRasterLayer);
+            console.log('✓ PGA raster loaded');
         })
         .catch(error => {
             console.warn('PGA raster not loaded:', error.message);
-            document.getElementById('map-info').innerHTML = `
-                <p style="color: #ff9800;">⚠ PGA raster not found</p>
-                <p style="font-size: 12px;">Make sure pgamasked.tif is in data/ folder</p>
-            `;
+            LayerPanel.fail('pga', error.message);
         });
 } else {
-    console.warn('Georaster libraries not loaded. Add these to your HTML:');
-    console.warn('<script src="https://unpkg.com/georaster"></script>');
-    console.warn('<script src="https://unpkg.com/georaster-layer-for-leaflet"></script>');
-    
-    document.getElementById('map-info').innerHTML = `
-        <p style="color: #f44336;">✗ Georaster libraries missing</p>
-        <p style="font-size: 12px;">See console for instructions</p>
-    `;
+    console.warn('Georaster libraries not loaded — PGA raster unavailable.');
+    LayerPanel.fail('pga', 'Georaster libraries not loaded');
 }
 
-// ENHANCED LAYER CONTROL
-setTimeout(() => {
-    const baseMaps = {
-        "🗺️ Terrain": terrainLayer,
-        "🌍 OpenStreetMap": osmLayer
-    };
-    
-    const overlayMaps = {};
-    
-    // Add layers that are loaded
-    if (pgaRasterLayer) overlayMaps["📊 PGA Intensity"] = pgaRasterLayer;
-    if (contoursLayer) overlayMaps["📈 Contours"] = contoursLayer;
-    if (gebcoLayer) overlayMaps["🌊 GEBCO Bathymetry"] = gebcoLayer;
-    if (phBoundaryLayer) overlayMaps["🗾 Philippines Border"] = phBoundaryLayer;
-    if (epicenterLayer) overlayMaps["⭐ Epicenter"] = epicenterLayer;
-    if (faultsLayer) overlayMaps["⚠️ Active Faults"] = faultsLayer;
-    if (researchFaultsLayer) overlayMaps["🔬 Research Faults (Batangas)"] = researchFaultsLayer;
-    if (bacudLayer) overlayMaps["🌊 Bacud 1997 Tectonic Map"] = bacudLayer;
-    
-    L.control.layers(baseMaps, overlayMaps, {
-        position: 'topright',
-        collapsed: false  // Keep expanded by default
-    }).addTo(map);
-    
-    console.log('✓ Layer controls initialized');
-}, 2000); // Wait 2 seconds for all layers to load
-
-// LEGEND
-const legend = L.control({position: 'bottomright'});
-
-legend.onAdd = function(map) {
-    const div = L.DomUtil.create('div', 'legend');
-    div.innerHTML = `
-        <h4>PGA Scale (cm/s²)</h4>
-        <i style="background: #67001f"></i> <span>> 200 (Extreme)</span><br>
-        <i style="background: #b2182b"></i> <span>150-200 (Very High)</span><br>
-        <i style="background: #d6604d"></i> <span>100-150 (High)</span><br>
-        <i style="background: #f4a582"></i> <span>75-100 (Moderate)</span><br>
-        <i style="background: #fddbc7"></i> <span>50-75 (Low)</span><br>
-        <i style="background: #d1e5f0"></i> <span>25-50 (Very Low)</span><br>
-        <i style="background: #92c5de"></i> <span>10-25 (Minimal)</span><br>
-        <i style="background: #4393c3"></i> <span>< 10 (Negligible)</span>
-    `;
-    return div;
-};
-
-legend.addTo(map);
-
-// INITIALIZATION MESSAGE
-console.log('🗺️ SeiScanPH Map initialized!');
-console.log('📍 Epicenter: 13.4251°N, 121.0220°E (Calapan)');
-console.log('📊 Loading QGIS exports...');
-console.log('');
-console.log('Files expected:');
-console.log('  - data/ph_boundary.geojson');
-console.log('  - data/contours.geojson');
-console.log('  - data/epicenter.geojson');
-console.log('  - data/pgamasked.tif');
-console.log('');
-console.log('For full raster support, add to HTML:');
-console.log('<script src="https://unpkg.com/georaster"></script>');
-console.log('<script src="https://unpkg.com/georaster-layer-for-leaflet"></script>');
+console.log('🗺️ SeiScanPH map initialized — epicenter 13.4251°N, 121.0220°E (Calapan)');

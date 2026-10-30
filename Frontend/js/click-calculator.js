@@ -20,17 +20,16 @@ async function checkAPIConnection() {
         if (data.status === 'healthy') {
             apiConnected = true;
 
-            // Update header status
+            // Update top-bar status (dot + label)
             statusEl.className = 'api-status connected';
-            statusEl.querySelector('.status-text').textContent = 'API Online';
+            statusEl.querySelector('.status-text').textContent = 'Live data';
 
-            // Update sidebar info
+            // Update panel data status (Layers tab)
             if (infoPanel) {
                 const count = data.seismic_points_loaded?.toLocaleString() || '?';
                 infoPanel.innerHTML = `
-                    <p class="status-connected">✓ Connected to PostGIS</p>
-                    <p class="status-points">${count} PGA data points loaded</p>
-                    <p style="font-size: 11px; color: var(--accent); margin-top: 6px;">Click the map or search a location</p>
+                    <span class="status-ok">Connected to PostGIS</span> · ${count} PGA data points.
+                    Click the map or search a location.
                 `;
             }
             console.log(`✓ API connected | ${data.seismic_points_loaded} points`);
@@ -41,16 +40,14 @@ async function checkAPIConnection() {
         apiConnected = false;
 
         statusEl.className = 'api-status disconnected';
-        statusEl.querySelector('.status-text').textContent = 'API Offline';
+        statusEl.querySelector('.status-text').textContent = 'Offline data';
 
         if (infoPanel) {
             infoPanel.innerHTML = `
-                <p style="color: var(--warning); font-weight: 600;">⚠ API Offline</p>
-                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                    Run: <code style="background: var(--bg-primary); padding: 1px 5px; border-radius: 3px;">uvicorn main:app --reload</code>
-                </p>
+                <span class="status-warn">Offline data</span> · calculations use the bundled PGA points.
             `;
         }
+        console.info('API offline. To use live data, run the backend: uvicorn main:app --reload');
         loadStaticPGAData();
     }
 }
@@ -125,47 +122,6 @@ function getIntensityDescription(mmi) {
 }
 
 // ============================================
-// POPUP BUILDER
-// ============================================
-function buildPopupHTML(data, source = 'api') {
-    const color = data.color || '#3b82f6';
-    const textColor = data.text_color || data.textColor || '#333';
-
-    return `
-        <div style="min-width: 280px; font-family: 'DM Sans', sans-serif;">
-            <div style="background: ${color}; color: ${textColor}; padding: 12px; margin: -10px -10px 12px -10px; border-radius: 8px 8px 0 0; text-align: center;">
-                <h3 style="margin: 0; font-size: 18px; font-weight: 700;">${data.intensity_level}</h3>
-            </div>
-            <table style="width: 100%; font-size: 13px; margin-bottom: 12px; border-collapse: collapse;">
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 6px 0; color: #666; font-weight: 500;">Location</td>
-                    <td style="padding: 6px 0; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${data.location.lat}°N, ${data.location.lon}°E</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 6px 0; color: #666; font-weight: 500;">PGA Value</td>
-                    <td style="padding: 6px 0; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${data.pga_value} cm/s²</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 6px 0; color: #666; font-weight: 500;">Epicenter Distance</td>
-                    <td style="padding: 6px 0; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px;">${data.distance_from_epicenter_km} km</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666; font-weight: 500;">Source</td>
-                    <td style="padding: 6px 0; text-align: right; font-size: 11px; color: ${source === 'api' ? '#22c55e' : '#f59e0b'};">
-                        ${source === 'api' ? '✓ PostGIS API' : '⚠ Offline'}
-                    </td>
-                </tr>
-            </table>
-            <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border-left: 3px solid ${color};">
-                <p style="font-size: 12px; color: #555; margin: 0; line-height: 1.5;">
-                    <strong>Expected Effects:</strong><br>${data.description}
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-// ============================================
 // MAIN CLICK HANDLER
 // ============================================
 setTimeout(() => {
@@ -183,20 +139,9 @@ setTimeout(() => {
         const clickLat = e.latlng.lat;
         const clickLon = e.latlng.lng;
 
-        // Loading popup
-        L.popup({ maxWidth: 320, className: 'intensity-popup' })
-            .setLatLng(e.latlng)
-            .setContent(`
-                <div style="padding: 20px; text-align: center; min-width: 200px; font-family: 'DM Sans', sans-serif;">
-                    <div style="width: 24px; height: 24px; border: 3px solid #3b82f6; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px;"></div>
-                    <p style="color: #333; font-weight: 600; margin: 0;">Calculating intensity...</p>
-                    <p style="font-size: 11px; color: #999; margin: 4px 0 0;">
-                        ${apiConnected ? 'Querying PostGIS' : 'Offline mode'}
-                    </p>
-                </div>
-                <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-            `)
-            .openOn(map);
+        // Results card shows "Calculating…" (nearest-fault.js may already have
+        // opened it for this same click — open() only resets once per click)
+        ResultsCard.open(e.latlng);
 
         let popupData = null;
         let source = 'offline';
@@ -212,18 +157,9 @@ setTimeout(() => {
                     popupData = data;
                     source = 'api';
                 } else if (data.status === 'outside_coverage') {
-                    L.popup({ maxWidth: 320 }).setLatLng(e.latlng)
-                        .setContent(`
-                            <div style="padding: 20px; text-align: center; min-width: 250px; font-family: 'DM Sans', sans-serif;">
-                                <div style="font-size: 32px; margin-bottom: 8px;">📍</div>
-                                <h3 style="color: #666; margin: 0 0 8px; font-size: 15px;">Outside Coverage Area</h3>
-                                <p style="font-size: 12px; color: #999; margin: 0; line-height: 1.5;">
-                                    ${data.message || 'No data available for this location'}
-                                    ${data.distance_from_epicenter_km ? '<br>Epicenter distance: ' + data.distance_from_epicenter_km + ' km' : ''}
-                                </p>
-                            </div>
-                        `)
-                        .openOn(map);
+                    ResultsCard.showMessage(e.latlng, 'Outside the study area',
+                        data.message || 'No shaking data is available for this location.',
+                        data.distance_from_epicenter_km);
                     return;
                 }
             } catch (err) {
@@ -251,33 +187,23 @@ setTimeout(() => {
             }
         }
 
-        // NO DATA
+        // NO DATA (shown in the same card)
         if (!popupData) {
-            L.popup({ maxWidth: 320 }).setLatLng(e.latlng)
-                .setContent(`
-                    <div style="padding: 20px; text-align: center; font-family: 'DM Sans', sans-serif;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">🚫</div>
-                        <p style="color: #ef4444; font-weight: 600; margin: 0;">No Data Available</p>
-                        <p style="font-size: 11px; color: #999; margin-top: 4px;">
-                            ${apiConnected ? 'Outside coverage area' : 'API offline — no static data loaded'}
-                        </p>
-                    </div>
-                `).openOn(map);
+            const epicenterKm = haversineDistance(clickLat, clickLon, 13.4251, 121.0220);
+            if (apiConnected || pgaPointsData.length > 0) {
+                ResultsCard.showMessage(e.latlng, 'Outside the study area',
+                    'This spot is outside the area covered by the scenario data.', epicenterKm);
+            } else {
+                ResultsCard.showMessage(e.latlng, 'No data yet',
+                    'The calculation server is offline and the bundled PGA data hasn\'t finished loading. Try again in a moment.',
+                    epicenterKm);
+            }
             return;
         }
 
-        // SHOW RESULT
-        L.popup({ maxWidth: 340, className: 'intensity-popup' })
-            .setLatLng(e.latlng)
-            .setContent(buildPopupHTML(popupData, source))
-            .openOn(map);
-
-        // Temporary marker
-        const clickMarker = L.circleMarker(e.latlng, {
-            radius: 8, fillColor: popupData.color || '#3b82f6',
-            color: '#fff', weight: 2, opacity: 0.9, fillOpacity: 0.7
-        }).addTo(map);
-        setTimeout(() => map.removeLayer(clickMarker), 5000);
+        // SHOW RESULT in the card (the clicked-point marker is kept by ResultsCard
+        // until the card is closed or the map is clicked again)
+        ResultsCard.showResult(e.latlng, popupData, source);
 
         console.log(`[${source.toUpperCase()}] ${clickLat.toFixed(4)}, ${clickLon.toFixed(4)} → PGA: ${popupData.pga_value} | ${popupData.intensity_level}`);
     });

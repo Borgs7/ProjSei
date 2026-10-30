@@ -3,215 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeiScanPH - Earthquake Hazard Map</title>
+    <title>Hazard Map — SeiScanPH</title>
+    <meta name="description" content="SeiScanPH hazard map: click anywhere to estimate shaking intensity in the M7.1 Calapan earthquake scenario and find the nearest active fault.">
 
-    <!-- Fonts -->
+    <!-- Fonts: Archivo (headings/nav/buttons), Public Sans (body), JetBrains Mono (labels) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=JetBrains+Mono:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    <!-- Custom CSS -->
+    <!-- Map page styles (the map deliberately does NOT load landing.css) -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <!-- HEADER -->
-    <header id="header">
-        <div class="header-left">
-            <div class="logo">
-                <div class="logo-icon">S</div>
-                <div>
-                    <h1>SeiScanPH</h1>
-                    <p class="tagline">Earthquake Hazard Intelligence</p>
-                </div>
-            </div>
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <a class="brand" href="index.html" aria-label="SeiScanPH home">
+            <img class="chip" src="images/logo.png" alt="">
+            <span><b>SeiScanPH</b><small>Seismic Hazard · PH</small></span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="map.html" class="on" aria-current="page">Hazard Map</a>
+            <a href="about.html">About Us</a>
+            <a href="gallery.html">Gallery</a>
+            <a href="resources.html">Resources</a>
+        </nav>
+        <!-- Search: js/map-ui.js (Nominatim, Philippines only; Enter to search) -->
+        <div class="search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="search-input" type="search" placeholder="Search a place — e.g. Calapan, Batangas City" aria-label="Search location" autocomplete="off">
+            <div class="search-results" id="search-results" hidden></div>
         </div>
-
-        <div class="header-center">
-            <div class="search-container">
-                <div class="search-box">
-                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" id="search-input" placeholder="Search location — e.g. Calapan, Manila, Batangas..." autocomplete="off">
-                    <button id="search-btn" onclick="searchLocation()">Go</button>
-                </div>
-                <div id="search-results" class="search-results"></div>
-            </div>
-        </div>
-
-        <div class="header-right">
-            <div class="api-status" id="api-status">
-                <span class="status-dot"></span>
-                <span class="status-text">Checking...</span>
-            </div>
+        <!-- API status: class + .status-text set by js/click-calculator.js -->
+        <div class="api-status" id="api-status" title="Connection to the calculation server" role="status">
+            <i aria-hidden="true"></i><span class="status-text">Checking…</span>
         </div>
     </header>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
+    <div class="app" id="app">
+
+        <!-- SIDE PANEL -->
+        <aside class="side" id="side-panel" aria-label="Map panel">
+            <section class="scen" aria-label="Active scenario">
+                <div class="lbl">Active scenario</div>
+                <div class="row">
+                    <span class="mag">M7.1</span>
+                    <div><h2>Calapan Earthquake</h2><p>Oriental Mindoro</p></div>
+                </div>
+                <div class="meta">
+                    <span><b>DEPTH</b>10 km</span>
+                    <span><b>EPICENTER</b>13.43°N, 121.02°E</span>
+                </div>
+                <div class="note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5CC78" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                    A modelled "what-if" scenario, not a forecast.
+                </div>
+            </section>
+
+            <div class="tabs" role="tablist" aria-label="Panel sections">
+                <button type="button" role="tab" id="tab-layers" aria-controls="p-layers" aria-selected="true">Layers</button>
+                <button type="button" role="tab" id="tab-legend" aria-controls="p-legend" aria-selected="false" tabindex="-1">Legend</button>
+                <button type="button" role="tab" id="tab-about" aria-controls="p-about" aria-selected="false" tabindex="-1">About</button>
+            </div>
+
+            <!-- LAYERS — rows are switched on/enabled by js/layer-panel.js as each layer finishes loading -->
+            <div class="pane" id="p-layers" role="tabpanel" aria-labelledby="tab-layers">
+                <div class="grp">
+                    <h3>Base map</h3>
+                    <div class="bases">
+                        <button type="button" class="base" data-base="light" aria-pressed="false"><div class="th th-light"></div><span>Light</span></button>
+                        <button type="button" class="base" data-base="terrain" aria-pressed="false"><div class="th th-terrain"></div><span>Terrain</span></button>
+                        <button type="button" class="base" data-base="streets" aria-pressed="false"><div class="th th-streets"></div><span>Streets</span></button>
+                    </div>
+                </div>
+
+                <div class="grp">
+                    <h3>Earthquake scenario</h3>
+                    <div class="lyr is-loading" data-layer="pga" data-sub="Modelled PGA, shown as MMI">
+                        <span class="sw sw-pga" aria-hidden="true"></span>
+                        <span class="t"><b>Shaking intensity</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Shaking intensity" disabled></button>
+                    </div>
+                    <div class="opac" data-opacity-for="pga">
+                        <label for="op-pga">Opacity</label>
+                        <input id="op-pga" type="range" min="0" max="100" value="70" disabled>
+                        <output for="op-pga">70%</output>
+                    </div>
+                    <div class="lyr is-loading" data-layer="contours" data-sub="PGA contour lines">
+                        <span class="sw sw-contours" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff7800" stroke-width="2"><path d="M3 15c3-4 6-4 9 0s6 4 9 0M3 9c3-4 6-4 9 0s6 4 9 0"/></svg></span>
+                        <span class="t"><b>Intensity contours</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Intensity contours" disabled></button>
+                    </div>
+                    <div class="lyr is-loading" data-layer="epicenter" data-sub="M7.1 Calapan">
+                        <span class="sw sw-red" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="#B4111A"/></svg></span>
+                        <span class="t"><b>Epicenter</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Epicenter" disabled></button>
+                    </div>
+                </div>
+
+                <div class="grp">
+                    <h3>Faults</h3>
+                    <div class="lyr is-loading" data-layer="faults" data-sub="PHIVOLCS · official catalogue">
+                        <span class="sw sw-red" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 18L10 9l4 5 7-9" fill="none" stroke="#d62728" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+                        <span class="t"><b>Active faults</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Active faults" disabled></button>
+                    </div>
+                    <div class="lyr is-loading" data-layer="research" data-sub="Published studies · Batangas">
+                        <span class="sw sw-purple" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 18L10 9l4 5 7-9" fill="none" stroke="#7b3fbf" stroke-width="2.4" stroke-dasharray="4 3" stroke-linecap="round"/></svg></span>
+                        <span class="t"><b>Research faults</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Research faults" disabled></button>
+                    </div>
+                    <div class="lyr is-loading" data-layer="bacud" data-sub="Sibuyan Sea region">
+                        <span class="sw sw-purple" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M3 18L10 9l4 5 7-9" fill="none" stroke="#9c6ad6" stroke-width="2.2" stroke-dasharray="1 3" stroke-linecap="round"/></svg></span>
+                        <span class="t"><b>Bacud (1997) tectonic map</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Bacud 1997 tectonic map" disabled></button>
+                    </div>
+                </div>
+
+                <div class="grp">
+                    <h3>Terrain &amp; context</h3>
+                    <div class="lyr is-loading" data-layer="gebco" data-sub="GEBCO 2026 grid">
+                        <span class="sw sw-gebco" aria-hidden="true"></span>
+                        <span class="t"><b>Bathymetry &amp; elevation</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Bathymetry and elevation" disabled></button>
+                    </div>
+                    <div class="opac" data-opacity-for="gebco">
+                        <label for="op-gebco">Opacity</label>
+                        <input id="op-gebco" type="range" min="0" max="100" value="75" disabled>
+                        <output for="op-gebco">75%</output>
+                    </div>
+                    <div class="lyr is-loading" data-layer="boundary" data-sub="National boundary lines">
+                        <span class="sw sw-border" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 4l5 3 4-2 5 4-2 6 2 5-6-1-4 2-4-5z" fill="none" stroke="#333" stroke-width="1.8"/></svg></span>
+                        <span class="t"><b>Philippine border</b><small class="lyr-sub">Loading…</small></span>
+                        <button type="button" class="tog" role="switch" aria-checked="false" aria-label="Philippine border" disabled></button>
+                    </div>
+                </div>
+
+                <!-- Data connection status: written by js/click-calculator.js -->
+                <p class="data-status" id="map-info">Checking the data connection…</p>
+            </div>
+
+            <!-- LEGEND -->
+            <div class="pane leg" id="p-legend" role="tabpanel" aria-labelledby="tab-legend" hidden>
+                <h4>Shaking intensity (MMI)</h4>
+                <div class="mmi" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="mmi-l" aria-hidden="true"><span>I</span><span>II</span><span>III</span><span>IV</span><span>V</span><span>VI</span><span>VII</span><span>VIII</span><span>IX</span><span>X</span></div>
+                <div class="mmi-k"><span>Not felt</span><span>Moderate</span><span>Extreme</span></div>
+
+                <h4>Faults</h4>
+                <div class="lk"><svg width="34" height="10" aria-hidden="true"><path d="M1 5h32" stroke="#d62728" stroke-width="3"/></svg>Active fault (PHIVOLCS)</div>
+                <div class="lk"><svg width="34" height="10" aria-hidden="true"><path d="M1 5h32" stroke="#d62728" stroke-width="3" stroke-dasharray="6 4"/></svg>Active fault, approximate trace</div>
+                <div class="lk"><svg width="34" height="10" aria-hidden="true"><path d="M1 5h32" stroke="#ff7f0e" stroke-width="2.5" stroke-dasharray="4 3"/></svg>Potentially active fault (PHIVOLCS)</div>
+                <div class="lk"><svg width="34" height="10" aria-hidden="true"><path d="M1 5h32" stroke="#7f7f7f" stroke-width="3" stroke-dasharray="2 4"/></svg>Concealed trace</div>
+                <div class="lk"><svg width="34" height="10" aria-hidden="true"><path d="M1 5h32" stroke="#7b3fbf" stroke-width="3" stroke-dasharray="6 4"/></svg>Research fault (published study)</div>
+                <div class="lk"><svg width="34" height="10" aria-hidden="true"><path d="M2 5h30" stroke="#9c6ad6" stroke-width="3" stroke-dasharray="1 5" stroke-linecap="round"/></svg>Bacud (1997) tectonic map</div>
+
+                <h4>Bathymetry &amp; elevation</h4>
+                <div class="elev" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="elev-l"><span>&lt; −3,000 m</span><span>0 m</span><span>&gt; 2,000 m</span></div>
+            </div>
+
+            <!-- ABOUT -->
+            <div class="pane about" id="p-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+                <p>Click anywhere in the study area to estimate how strongly the ground would shake in the M7.1 Calapan scenario, and how far the nearest active fault is.</p>
+                <dl>
+                    <div><dt>Intensity</dt><dd>PGA → MMI using Wald et al. (1999)</dd></div>
+                    <div><dt>Interpolation</dt><dd>Inverse distance weighting, 8 nearest points</dd></div>
+                    <div><dt>Active faults</dt><dd>PHIVOLCS active fault catalogue</dd></div>
+                    <div><dt>Research faults</dt><dd>Austria et al. (2023); Frias et al. (2019); Rohrlach (2012); Bacud (1997)</dd></div>
+                    <div><dt>Bathymetry</dt><dd>GEBCO Compilation Group (2026) GEBCO 2026 Grid</dd></div>
+                    <div><dt>Base maps</dt><dd>© OpenStreetMap contributors; © CARTO; © OpenTopoMap (CC-BY-SA)</dd></div>
+                </dl>
+                <p class="disclaimer"><strong>This is a modelled scenario, not a forecast.</strong> It does not replace a site-specific engineering assessment.</p>
+            </div>
+
+            <div class="side-foot"><span>Data: PHIVOLCS · GEBCO · OSM</span><a href="resources.html">Resources →</a></div>
+        </aside>
+
+        <button type="button" class="collapse" id="panel-collapse" aria-controls="side-panel" aria-expanded="true" aria-label="Hide panel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
 
-        <div class="sidebar-content" id="sidebar-content">
-            <!-- Scenario Info -->
-            <div class="sidebar-section">
-                <div class="section-label">ACTIVE SCENARIO</div>
-                <div class="scenario-card">
-                    <div class="scenario-magnitude">M 7.1</div>
-                    <div class="scenario-details">
-                        <div class="scenario-name">Calapan Earthquake</div>
-                        <div class="scenario-location">Oriental Mindoro</div>
-                        <div class="scenario-meta">
-                            <span>Depth: 10 km</span>
-                            <span>•</span>
-                            <span>13.43°N, 121.02°E</span>
-                        </div>
-                    </div>
+        <!-- MAP -->
+        <main class="mapwrap">
+            <div id="map" aria-label="Hazard map"></div>
+
+            <div class="hint" id="map-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5CC78" stroke-width="2.4" aria-hidden="true"><path d="M5 3l14 8-6 2-2 6z"/></svg>
+                Click the map to see <b>shaking intensity</b> at any spot
+            </div>
+            <div class="toast" id="map-toast" role="status" hidden></div>
+
+            <!-- RESULTS CARD: filled by js/results-card.js -->
+            <section class="card" id="result-card" aria-label="Location details" aria-live="polite" hidden>
+                <div class="band" id="rc-band">
+                    <div class="k" id="rc-kicker">Expected shaking</div>
+                    <h3 id="rc-title">Calculating…</h3>
+                    <p id="rc-coords"></p>
+                    <button type="button" class="x" id="rc-close" aria-label="Close details">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
                 </div>
+                <dl class="stats">
+                    <div><dt>Peak ground accel.</dt><dd id="rc-pga">—</dd></div>
+                    <div><dt>From epicenter</dt><dd id="rc-dist">—</dd></div>
+                </dl>
+                <div class="fault">
+                    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#FDECEC"/><path d="M6 21l6-9 4 5 8-9" fill="none" stroke="#d62728" stroke-width="2.4" stroke-linecap="round"/></svg>
+                    <div class="t"><b>Nearest active fault</b><small id="rc-fault">Finding the nearest fault…</small></div>
+                </div>
+                <div class="eff" id="rc-eff-row" hidden><b id="rc-eff-label">What people would feel</b><span id="rc-eff"></span></div>
+                <div class="src"><span id="rc-src"></span><span>M7.1 Calapan</span></div>
+            </section>
+
+            <!-- Compact MMI legend: shown only while Shaking intensity is on (js/layer-panel.js) -->
+            <div class="mini-leg" id="mini-legend" hidden>
+                <b>Shaking intensity · MMI</b>
+                <div class="mmi" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="mmi-k"><span>I</span><span>V</span><span>X</span></div>
             </div>
 
-            <!-- Status -->
-            <div class="sidebar-section">
-                <div class="section-label">DATA STATUS</div>
-                <div id="map-info" class="status-info">
-                    <p>Connecting to API...</p>
+            <!-- Map buttons: js/map-ui.js -->
+            <div class="ctl">
+                <div class="stack">
+                    <button type="button" id="zoom-in" aria-label="Zoom in"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                    <button type="button" id="zoom-out" aria-label="Zoom out"><svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                </div>
+                <div class="stack">
+                    <button type="button" id="reset-view" aria-label="Reset view to the study area"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+                    <button type="button" id="locate-me" aria-label="Show my location"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
                 </div>
             </div>
-
-            <!-- How to use -->
-            <div class="sidebar-section">
-                <div class="section-label">HOW TO USE</div>
-                <div class="instructions">
-                    <div class="instruction-step">
-                        <span class="step-num">1</span>
-                        <span>Search a location or click the map</span>
-                    </div>
-                    <div class="instruction-step">
-                        <span class="step-num">2</span>
-                        <span>View earthquake intensity (MMI)</span>
-                    </div>
-                    <div class="instruction-step">
-                        <span class="step-num">3</span>
-                        <span>Read expected effects and PGA values</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Legend -->
-            <div class="sidebar-section">
-                <div class="section-label">INTENSITY SCALE</div>
-                <div class="legend-items">
-                    <div class="legend-row"><span class="legend-color" style="background:#FF0000"></span><span>X — Extreme</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FF7F7F"></span><span>IX — Violent</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFA500"></span><span>VIII — Severe</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFD27F"></span><span>VII — Very Strong</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFFF00"></span><span>VI — Strong</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#7FFF7F"></span><span>V — Moderate</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#7FFFE6"></span><span>IV — Light</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#9FD9FF"></span><span>III — Weak</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#BFCCFF"></span><span>II — Weak</span></div>
-                    <div class="legend-row"><span class="legend-color" style="background:#FFFFFF; border: 1px solid #ccc"></span><span>I — Not Felt</span></div>
-                </div>
-            </div>
-
-            <!-- Credits -->
-            <div class="sidebar-section sidebar-footer">
-                <div class="section-label">METHODOLOGY</div>
-                <p class="credit-text">PGA → MMI: Wald et al. (1999)</p>
-                <p class="credit-text">Interpolation: IDW (8 nearest points)</p>
-                <p class="credit-text">Database: PostGIS + FastAPI</p>
-            </div>
-        </div>
+        </main>
     </div>
 
-    <!-- MAP -->
-    <div id="map"></div>
-
-    <!-- Scripts -->
+    <!-- Scripts (order matters: helpers → panel/card → map → calculator → page UI) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
     <script src="https://unpkg.com/georaster-layer-for-leaflet@3.10.0/dist/georaster-layer-for-leaflet.min.js"></script>
     <script src="js/active-faults.js"></script>
-    <script src="js/nearest-fault.js"></script>
-    <script src="js/gebco-terrain.js"></script>
     <script src="js/research-faults.js"></script>
+    <script src="js/gebco-terrain.js"></script>
+    <script src="js/nearest-fault.js"></script>
+    <script src="js/results-card.js"></script>
+    <script src="js/layer-panel.js"></script>
     <script src="js/map.js"></script>
     <script src="js/click-calculator.js"></script>
-
-    <!-- Search & Sidebar Logic -->
-    <script>
-        // SEARCH - Uses Nominatim (free OpenStreetMap geocoder)
-        async function searchLocation() {
-            const query = document.getElementById('search-input').value.trim();
-            if (!query) return;
-
-            const resultsDiv = document.getElementById('search-results');
-            resultsDiv.innerHTML = '<div class="search-loading">Searching...</div>';
-            resultsDiv.style.display = 'block';
-
-            try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&limit=5`;
-                const response = await fetch(url, {
-                    headers: { 'Accept-Language': 'en' }
-                });
-                const results = await response.json();
-
-                if (results.length === 0) {
-                    resultsDiv.innerHTML = '<div class="search-no-results">No results found</div>';
-                    return;
-                }
-
-                resultsDiv.innerHTML = results.map(r => `
-                    <div class="search-result-item" onclick="goToLocation(${r.lat}, ${r.lon}, '${r.display_name.replace(/'/g, "\\'")}')">
-                        <div class="result-name">${r.display_name.split(',').slice(0, 3).join(',')}</div>
-                        <div class="result-coords">${parseFloat(r.lat).toFixed(4)}°N, ${parseFloat(r.lon).toFixed(4)}°E</div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                resultsDiv.innerHTML = '<div class="search-no-results">Search failed — check connection</div>';
-            }
-        }
-
-        function goToLocation(lat, lon, name) {
-            document.getElementById('search-results').style.display = 'none';
-            document.getElementById('search-input').value = name.split(',').slice(0, 2).join(',');
-            map.flyTo([lat, lon], 12, { duration: 1.5 });
-
-            // Auto-trigger intensity calculation at that location
-            setTimeout(() => {
-                map.fire('click', { latlng: L.latLng(lat, lon) });
-            }, 1800);
-        }
-
-        // Enter key triggers search
-        document.getElementById('search-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') searchLocation();
-        });
-
-        // Close search results when clicking elsewhere
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.search-container')) {
-                document.getElementById('search-results').style.display = 'none';
-            }
-        });
-
-        // SIDEBAR TOGGLE
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.getElementById('sidebar-toggle');
-            sidebar.classList.toggle('collapsed');
-
-            toggle.innerHTML = sidebar.classList.contains('collapsed')
-                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-        }
-    </script>
+    <script src="js/map-ui.js"></script>
 </body>
 </html>
