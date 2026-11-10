@@ -17,6 +17,18 @@ EPICENTER = {
     "name": "Calapan, Mindoro"
 }
 
+# The PGA data (seismic_points) is a full regular grid, 0.02° (~2.2 km) spacing,
+# so anywhere inside it is within ~1.6 km of a grid point. A click farther than
+# this from the nearest point is outside the scenario data.
+# Same rule as Frontend/js/click-calculator.js (offline path).
+MAX_DATA_DISTANCE_KM = 3
+
+OUTSIDE_MESSAGE = (
+    "The M7.1 Calapan scenario covers 11.6°–14.1°N, 120.1°–124.2°E "
+    "(Mindoro, Batangas, Marinduque, Romblon and nearby areas). "
+    "No shaking estimate is available here."
+)
+
 
 @router.get("/intensity")
 async def calculate_intensity(
@@ -61,27 +73,14 @@ async def calculate_intensity(
             for row in rows
         ]
 
-         # STEP 2: Check if click is within data coverage
+        # STEP 2: Check the click is inside the scenario grid (nearest point within 3 km)
         nearest_distance = nearest_points[0]["distance_km"]
-        MAX_DATA_DISTANCE_KM = 20  # Must be within 20km of a data point
-
-        # Bounding box check (from actual data extent + small buffer)
-        DATA_BOUNDS = {
-            "min_lat": 11.6, "max_lat": 14.2,
-            "min_lon": 120.0, "max_lon": 124.3
-        }
-
         distance_from_epicenter = haversine_distance(lat, lon, EPICENTER["lat"], EPICENTER["lon"])
 
-        out_of_bounds = (
-            lat < DATA_BOUNDS["min_lat"] or lat > DATA_BOUNDS["max_lat"] or
-            lon < DATA_BOUNDS["min_lon"] or lon > DATA_BOUNDS["max_lon"]
-        )
-
-        if out_of_bounds or nearest_distance > MAX_DATA_DISTANCE_KM:
+        if nearest_distance > MAX_DATA_DISTANCE_KM:
             return {
                 "status": "outside_coverage",
-                "message": "Location is outside the M 7.1 Calapan earthquake simulation coverage",
+                "message": OUTSIDE_MESSAGE,
                 "nearest_data_point_km": round(nearest_distance, 1),
                 "distance_from_epicenter_km": round(distance_from_epicenter, 1),
                 "location": {"lat": lat, "lon": lon}

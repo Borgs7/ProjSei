@@ -6,6 +6,16 @@
 const API_BASE = 'http://localhost:8000';
 let apiConnected = false;
 
+// The PGA data is a full regular grid (0.02° ≈ 2.2 km spacing), so anywhere inside it
+// is within ~1.6 km of a grid point. Farther than this from the nearest point means
+// the click is outside the scenario data. Same rule as Backend/routers/calculations.py.
+const MAX_DATA_DISTANCE_KM = 3;
+
+// Shown for clicks outside the scenario data (API and offline paths alike)
+const OUTSIDE_TITLE = 'Outside the scenario area';
+const OUTSIDE_TEXT = 'The M7.1 Calapan scenario covers 11.6°–14.1°N, 120.1°–124.2°E '
+    + '(Mindoro, Batangas, Marinduque, Romblon and nearby areas). No shaking estimate is available here.';
+
 // ============================================
 // API CONNECTION CHECK
 // ============================================
@@ -87,7 +97,7 @@ function offlineCalculate(clickLat, clickLon) {
     const sorted = pgaPointsData
         .map(p => ({ ...p, dist: haversineDistance(clickLat, clickLon, p.lat, p.lon) }))
         .sort((a, b) => a.dist - b.dist).slice(0, 8);
-    if (sorted[0].dist > 500) return null;
+    if (sorted[0].dist > MAX_DATA_DISTANCE_KM) return null;   // outside the scenario grid
     let num = 0, den = 0;
     sorted.forEach(p => {
         if (p.dist < 0.001) { num = p.pga; den = 1; return; }
@@ -157,8 +167,8 @@ setTimeout(() => {
                     popupData = data;
                     source = 'api';
                 } else if (data.status === 'outside_coverage') {
-                    ResultsCard.showMessage(e.latlng, 'Outside the study area',
-                        data.message || 'No shaking data is available for this location.',
+                    // Same wording as the offline path below; the nearest-fault line still shows
+                    ResultsCard.showMessage(e.latlng, OUTSIDE_TITLE, OUTSIDE_TEXT,
                         data.distance_from_epicenter_km);
                     return;
                 }
@@ -191,8 +201,7 @@ setTimeout(() => {
         if (!popupData) {
             const epicenterKm = haversineDistance(clickLat, clickLon, 13.4251, 121.0220);
             if (apiConnected || pgaPointsData.length > 0) {
-                ResultsCard.showMessage(e.latlng, 'Outside the study area',
-                    'This spot is outside the area covered by the scenario data.', epicenterKm);
+                ResultsCard.showMessage(e.latlng, OUTSIDE_TITLE, OUTSIDE_TEXT, epicenterKm);
             } else {
                 ResultsCard.showMessage(e.latlng, 'No data yet',
                     'The calculation server is offline and the bundled PGA data hasn\'t finished loading. Try again in a moment.',
