@@ -45,7 +45,7 @@
             if (!next || next === this._base) return;
 
             if (this._base) this._map.removeLayer(this._base);
-            // Some tile servers stop at a lower zoom (OpenTopoMap: 17)
+            // Some base maps stop at a lower zoom (Terrain: 17)
             const maxZoom = next.options.maxZoom;
             if (maxZoom && this._map.getZoom() > maxZoom) this._map.setZoom(maxZoom);
             next.addTo(this._map);
@@ -57,6 +57,9 @@
                 btn.classList.toggle('on', on);
                 btn.setAttribute('aria-pressed', on);
             });
+
+            // Each base map has its own detailed (zoom 12+) name tiles
+            if (global.PlaceLabels) PlaceLabels.setBase(key);
         },
 
         // ---- Data layers ----

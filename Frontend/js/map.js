@@ -17,24 +17,70 @@ ResultsCard.init(map);
 LayerPanel.init(map);
 
 // ============================================
-// BASE MAPS — all keyless (work on GitHub Pages), with required attribution
+// BASE MAPS — all label-free, with required attribution. Place names are drawn
+// by js/place-labels.js so they can be filtered by zoom.
+//   Light / Streets: CARTO (needs a CARTO Basemaps API key since 25 Sept 2026)
+//   Terrain: Esri World Terrain Base (keyless). Esri lists it to zoom 13, but over the
+//            Philippines zoom 10+ tiles only say "Map data not yet available", so zoom 9
+//            tiles are enlarged beyond that (maxNativeZoom).
 // ============================================
+const CARTO_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+// CARTO Basemaps API keys (dashboard.basemaps.carto.com). Public on purpose: each key only
+// works on the hosts it is restricted to there. A CARTO key can't list localhost AND a
+// public site, hence two keys.
+const CARTO_KEYS = {
+    live: 'cb1_55qb_1_9c871cd9c82d655de91c87e9',    // borgs7.github.io
+    local: 'cb1_55qb_2_23113bbf60ff367d1a2efeeb'    // localhost, 127.0.0.1 (Live Server, python -m http.server)
+};
+const CARTO_KEY = ['localhost', '127.0.0.1'].includes(location.hostname) ? CARTO_KEYS.local : CARTO_KEYS.live;
+const cartoTiles = (style) => `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png?key=${CARTO_KEY}`;
+const ESRI_SERVICES = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+
 const baseLayers = {
-    light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    light: L.tileLayer(cartoTiles('light_nolabels'), {
+        attribution: CARTO_ATTRIBUTION,
         subdomains: 'abcd',
         maxZoom: 20
     }),
-    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-        subdomains: 'abc',
+    terrain: L.tileLayer(ESRI_SERVICES + 'World_Terrain_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Sources: Esri, USGS, NOAA',
+        maxNativeZoom: 9,
         maxZoom: 17
     }),
-    streets: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+    streets: L.tileLayer(cartoTiles('rastertiles/voyager_nolabels'), {
+        attribution: CARTO_ATTRIBUTION,
+        subdomains: 'abcd',
+        maxZoom: 20
     })
 };
+
+// Detailed names-only tiles, shown by place-labels.js at zoom 12+ over each base map.
+// NO minZoom here on purpose: Leaflet treats a layer's minZoom as a limit for the whole
+// map (the map jumps to 12 on a base-map switch and can't zoom out). place-labels.js
+// adds/removes these layers itself based on the current zoom.
+const labelTiles = {
+    terrain: L.tileLayer(ESRI_SERVICES + 'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Labels &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors, and the GIS user community',
+        maxZoom: 17,
+        pane: 'placeLabels'
+    }),
+    light: L.tileLayer(cartoTiles('light_only_labels'), {
+        attribution: CARTO_ATTRIBUTION,
+        subdomains: 'abcd',
+        maxZoom: 20,
+        pane: 'placeLabels'
+    }),
+    streets: L.tileLayer(cartoTiles('rastertiles/voyager_only_labels'), {
+        attribution: CARTO_ATTRIBUTION,
+        subdomains: 'abcd',
+        maxZoom: 20,
+        pane: 'placeLabels'
+    })
+};
+
+// Must run before setBasemaps(): it creates the label pane, and setBase() reports to it
+PlaceLabels.init(map, { url: 'data/place_labels.geojson', labelTiles: labelTiles });
 LayerPanel.setBasemaps(baseLayers, 'light');
 
 // LAYER REFERENCES (kept as globals; each is registered with the panel once loaded)
